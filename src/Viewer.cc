@@ -19,6 +19,7 @@
 */
 
 #include "Viewer.h"
+#include "Parameter.h"
 #include <pangolin/pangolin.h>
 
 #include <mutex>
@@ -65,13 +66,21 @@ void Viewer::Run()
     glEnable (GL_BLEND);
     glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    pangolin::CreatePanel("menu").SetBounds(0.0,1.0,0.0,pangolin::Attach::Pix(175));
+
+    auto& menu_panel = pangolin::CreatePanel("menu").SetBounds(0.0,1.0,0.0,pangolin::Attach::Pix(175));
     pangolin::Var<bool> menuFollowCamera("menu.Follow Camera",true,true);
     pangolin::Var<bool> menuShowPoints("menu.Show Points",true,true);
     pangolin::Var<bool> menuShowKeyFrames("menu.Show KeyFrames",true,true);
     pangolin::Var<bool> menuShowGraph("menu.Show Graph",true,true);
     pangolin::Var<bool> menuLocalizationMode("menu.Localization Mode",false,true);
     pangolin::Var<bool> menuReset("menu.Reset",false,false);
+
+
+    auto& parameter_panel = pangolin::CreatePanel("parameters").SetBounds(0.0,1.0,0.0,pangolin::Attach::Pix(175));
+    auto entries = ParameterManager::createPangolinEntries("parameters");
+    parameter_panel.ToggleShow();
+
+
 
     // Define Camera Render Object (for view / scene browsing)
     pangolin::OpenGlRenderState s_cam(
@@ -86,6 +95,12 @@ void Viewer::Run()
 
     pangolin::OpenGlMatrix Twc;
     Twc.SetIdentity();
+
+    // open parameter pane when pressing Ctrl+P
+    pangolin::RegisterKeyPressCallback(pangolin::PANGO_CTRL + 'p', [&]{
+            menu_panel.ToggleShow();
+            parameter_panel.ToggleShow();
+            });
 
     cv::namedWindow("ORB-SLAM2: Current Frame");
 
@@ -161,12 +176,15 @@ void Viewer::Run()
             }
         }
 
+        ParameterManager::updateParameters();
+
         if(CheckFinish())
             break;
     }
 
     SetFinish();
 }
+
 
 void Viewer::RequestFinish()
 {

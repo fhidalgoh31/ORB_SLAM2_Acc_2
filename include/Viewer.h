@@ -26,6 +26,8 @@
 #include "MapDrawer.h"
 #include "Tracking.h"
 #include "System.h"
+#include <stdio.h>
+#include "Parameter.h"
 
 #include <mutex>
 
