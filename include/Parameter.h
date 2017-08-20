@@ -112,7 +112,7 @@ class ParameterManager : public ParameterBase {
       const int& type = param->getVariant().which();
 
       if (type == 0) // int
-      { 
+      {
         auto& pango_var =  boost::get<pangolin::Var<int>* >(pango_var_variant);
         auto& value = boost::get<int>(param->getVariant());
         if(pango_var->Get() != value)
