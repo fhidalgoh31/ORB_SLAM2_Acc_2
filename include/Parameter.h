@@ -111,7 +111,8 @@ class ParameterManager : public ParameterBase {
 
       const int& type = param->getVariant().which();
 
-      if (type == 0) {
+      if (type == 0) // int
+      { 
         auto& pango_var =  boost::get<pangolin::Var<int>* >(pango_var_variant);
         auto& value = boost::get<int>(param->getVariant());
         if(pango_var->Get() != value)
@@ -120,7 +121,8 @@ class ParameterManager : public ParameterBase {
           std::cout << "param value of " << param->getName() <<" is: " << boost::get<int>(param->getVariant()) << std::endl;
         }
       }
-      else if (type == 1) {
+      else if (type == 1) // double
+      {
         auto& pango_var =  boost::get<pangolin::Var<double>* >(pango_var_variant);
         auto& value = boost::get<double>(param->getVariant());
         if(pango_var->Get() != value)
@@ -129,7 +131,8 @@ class ParameterManager : public ParameterBase {
           std::cout << "param value of " << param->getName() <<" is: " << boost::get<double>(param->getVariant()) << std::endl;
         }
       }
-      else if (type == 2) {
+      else if (type == 2) // bool
+      {
         auto& pango_var =  boost::get<pangolin::Var<bool>* >(pango_var_variant);
         auto& value = boost::get<bool>(param->getVariant());
         if(pango_var->Get() != value)
