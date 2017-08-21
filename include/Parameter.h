@@ -5,6 +5,7 @@
 #include <vector>
 #include <pangolin/pangolin.h>
 #include <boost/variant.hpp>
+#include <glog/logging.h>
 
 namespace ORB_SLAM2 {
 
@@ -60,7 +61,21 @@ class Parameter : public ParameterBase {
 
   virtual ~Parameter(){};
 
-  virtual const T& getValue() const { return mValue; };
+  const T& getValue() const { return mValue; };
+  const T& checkAndResetIfChanged() const 
+  {
+    if(mChanged)
+    {
+      mChanged = false;
+      return true;
+    }
+    else
+    {
+      return false;
+    }
+  };
+
+
   virtual const ParameterTypes getVariant() const override { return mValue; }; // cannot return a const ref because implicitly casted
   virtual void setValue(const T& value) override { mValue = value; };
   virtual const int getMinValue() const override { return minValue; };
@@ -73,13 +88,17 @@ class Parameter : public ParameterBase {
   int maxValue;
 
  protected:
+  friend class ParameterManager;
+
   T mValue;
   std::string mName;
+  bool mChanged;
 };
 
 
 class ParameterManager : public ParameterBase {
   public:
+
   typedef boost::variant<pangolin::Var<int>*, pangolin::Var<double>*, pangolin::Var<bool>*> PangolinVariants;
   typedef std::map<std::string, std::pair<ParameterBase*, PangolinVariants>> ParameterPairMap;
 
@@ -118,7 +137,8 @@ class ParameterManager : public ParameterBase {
         if(pango_var->Get() != value)
         {
           param->setValue(pango_var->Get());
-          std::cout << "param value of " << param->getName() <<" is: " << boost::get<int>(param->getVariant()) << std::endl;
+          static_cast<Parameter<int>* >(param)->mChanged = true;
+          LOG(INFO) << "Parameter value of " << param->getName() <<" is: " << boost::get<int>(param->getVariant());
         }
       }
       else if (type == 1) // double
@@ -128,7 +148,8 @@ class ParameterManager : public ParameterBase {
         if(pango_var->Get() != value)
         {
           param->setValue(pango_var->Get());
-          std::cout << "param value of " << param->getName() <<" is: " << boost::get<double>(param->getVariant()) << std::endl;
+          static_cast<Parameter<double>* >(param)->mChanged = true;
+          LOG(INFO) << "Parameter value of " << param->getName() <<" is: " << boost::get<double>(param->getVariant());
         }
       }
       else if (type == 2) // bool
@@ -138,13 +159,15 @@ class ParameterManager : public ParameterBase {
         if(pango_var->Get() != value)
         {
           param->setValue(pango_var->Get());
-          std::cout << "param value of " << param->getName() <<" is: " << boost::get<bool>(param->getVariant()) << std::endl;
+          static_cast<Parameter<bool>* >(param)->mChanged = true;
+          LOG(INFO) << "Parameter value of " << param->getName() <<" is: " << boost::get<bool>(param->getVariant());
         }
       }
     }
   }
 
   private:
+
   template<typename T>
   static void createPangolinEntry(ParameterBase* param, const std::string& panel_name)
   {
