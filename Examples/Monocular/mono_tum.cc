@@ -24,9 +24,11 @@
 #include<fstream>
 #include<chrono>
 
+#include <glog/logging.h>
 #include<opencv2/core/core.hpp>
 
 #include<System.h>
+
 
 using namespace std;
 
@@ -40,6 +42,11 @@ int main(int argc, char **argv)
         cerr << endl << "Usage: ./mono_tum path_to_vocabulary path_to_settings path_to_sequence" << endl;
         return 1;
     }
+
+    // initialize glog
+    FLAGS_logtostderr = 1;
+    google::InitGoogleLogging(argv[0]);
+    DLOG(INFO) << "Logging is active.";
 
     // Retrieve paths to images
     vector<string> vstrImageFilenames;
