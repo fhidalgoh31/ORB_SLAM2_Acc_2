@@ -84,7 +84,19 @@ cv::Mat FrameDrawer::DrawFrame()
                 cv::line(im,vIniKeys[i].pt,vCurrentKeys[vMatches[i]].pt,
                         cv::Scalar(0,255,0));
             }
-        }        
+        }
+        const float r = 5;
+        // draw all found points even if not initialized
+        for (int i = 0; i < vCurrentKeys.size(); i++) {
+              // cv::rectangle(im,pt1,pt2,cv::Scalar(0,0,255));
+              cv::Point2f pt1,pt2;
+              pt1.x=vCurrentKeys[i].pt.x-r;
+              pt1.y=vCurrentKeys[i].pt.y-r;
+              pt2.x=vCurrentKeys[i].pt.x+r;
+              pt2.y=vCurrentKeys[i].pt.y+r;
+
+              cv::circle(im,vCurrentKeys[i].pt,2,cv::Scalar(0,0,255),-1);
+        }
     }
     else if(state==Tracking::OK) //TRACKING
     {
@@ -115,6 +127,18 @@ cv::Mat FrameDrawer::DrawFrame()
                     cv::circle(im,vCurrentKeys[i].pt,2,cv::Scalar(255,0,0),-1);
                     mnTrackedVO++;
                 }
+            }
+            else
+            {
+              // This is not a match at all
+              // cv::rectangle(im,pt1,pt2,cv::Scalar(0,0,255));
+              cv::Point2f pt1,pt2;
+              pt1.x=vCurrentKeys[i].pt.x-r;
+              pt1.y=vCurrentKeys[i].pt.y-r;
+              pt2.x=vCurrentKeys[i].pt.x+r;
+              pt2.y=vCurrentKeys[i].pt.y+r;
+
+              cv::circle(im,vCurrentKeys[i].pt,2,cv::Scalar(0,0,255),-1);
             }
         }
     }
