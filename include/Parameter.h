@@ -40,6 +40,8 @@ template <typename T>
 class Parameter : public ParameterBase {
  public:
 
+  Parameter(){};
+
   Parameter(const std::string& name, const T& value)
       : mCategory(ParameterCategory::BOOL)
       , minValue(0)
