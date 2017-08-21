@@ -29,8 +29,8 @@ class ParameterBase {
   virtual void setValue(const int& value){} ;
   virtual void setValue(const float& value){} ;
   virtual void setValue(const double& value){} ;
-  virtual const int getMinValue() const { return 0.0; };
-  virtual const int getMaxValue() const { return 0.0; };
+  virtual const ParameterTypes getMinValue() const { return 0.0; };
+  virtual const ParameterTypes getMaxValue() const { return 0.0; };
   virtual const ParameterCategory getCategory() const { return ParameterCategory::UNDEFINED; };
   virtual const std::string getName() const { return "undefined"; };
 };
@@ -52,7 +52,7 @@ class Parameter : public ParameterBase {
     parameters.push_back(this);
   }
 
-  Parameter(const std::string& name, const T& value, const int& minValue, const int& maxValue)
+  Parameter(const std::string& name, const T& value, const T& minValue, const T& maxValue)
       : mCategory(ParameterCategory::MINMAX)
       , mMinValue(minValue)
       , mMaxValue(maxValue)
@@ -65,7 +65,7 @@ class Parameter : public ParameterBase {
   virtual ~Parameter(){};
 
   const T& getValue() const { return mValue; };
-  const bool checkAndResetIfChanged() const 
+  const bool checkAndResetIfChanged() 
   {
     if(mChanged)
     {
@@ -77,12 +77,6 @@ class Parameter : public ParameterBase {
       return false;
     }
   };
-  virtual const ParameterTypes getVariant() const override { return mValue; }; // cannot return a const ref because implicitly casted
-  virtual void setValue(const T& value) override { mValue = value; };
-  virtual const int getMinValue() const override { return mMinValue; };
-  virtual const int getMaxValue() const override { return mMaxValue; };
-  virtual const ParameterCategory getCategory() const override { return mCategory; };
-  virtual const std::string getName() const override { return mName; };
 
   const T& operator()()
   {
@@ -90,11 +84,18 @@ class Parameter : public ParameterBase {
   }
 
   const ParameterCategory mCategory;
-  int mMinValue;
-  int mMaxValue;
+  T mMinValue;
+  T mMaxValue;
 
  protected:
   friend class ParameterManager;
+
+  virtual const ParameterTypes getMinValue() const override { return mMinValue; };
+  virtual const ParameterTypes getMaxValue() const override { return mMaxValue; };
+  virtual const ParameterCategory getCategory() const override { return mCategory; };
+  virtual const std::string getName() const override { return mName; };
+  virtual const ParameterTypes getVariant() const override { return mValue; }; // cannot return a const ref because implicitly casted
+  virtual void setValue(const T& value) override { mValue = value; };
 
   T mValue;
   std::string mName;
@@ -200,7 +201,7 @@ class ParameterManager : public ParameterBase {
     {
       pangolinParams[param->getName()] = std::make_pair(param, (new pangolin::Var<T>(
               panel_name + "." + param->getName(), boost::get<T>(param->getVariant()),
-              param->getMinValue(),param->getMaxValue())));
+              boost::get<T>(param->getMinValue()),boost::get<T>(param->getMaxValue()))));
     }
   }
 
