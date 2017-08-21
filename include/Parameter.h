@@ -65,7 +65,7 @@ class Parameter : public ParameterBase {
   virtual ~Parameter(){};
 
   const T& getValue() const { return mValue; };
-  const T& checkAndResetIfChanged() const 
+  const bool checkAndResetIfChanged() const 
   {
     if(mChanged)
     {
