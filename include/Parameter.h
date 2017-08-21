@@ -44,8 +44,8 @@ class Parameter : public ParameterBase {
 
   Parameter(const std::string& name, const T& value)
       : mCategory(ParameterCategory::BOOL)
-      , minValue(0)
-      , maxValue(0)
+      , mMinValue(0)
+      , mMaxValue(0)
       , mValue(value)
       , mName(name)
   {
@@ -54,8 +54,8 @@ class Parameter : public ParameterBase {
 
   Parameter(const std::string& name, const T& value, const int& minValue, const int& maxValue)
       : mCategory(ParameterCategory::MINMAX)
-      , minValue(minValue)
-      , maxValue(maxValue)
+      , mMinValue(minValue)
+      , mMaxValue(maxValue)
       , mValue(value)
       , mName(name)
   {
@@ -79,8 +79,8 @@ class Parameter : public ParameterBase {
   };
   virtual const ParameterTypes getVariant() const override { return mValue; }; // cannot return a const ref because implicitly casted
   virtual void setValue(const T& value) override { mValue = value; };
-  virtual const int getMinValue() const override { return minValue; };
-  virtual const int getMaxValue() const override { return maxValue; };
+  virtual const int getMinValue() const override { return mMinValue; };
+  virtual const int getMaxValue() const override { return mMaxValue; };
   virtual const ParameterCategory getCategory() const override { return mCategory; };
   virtual const std::string getName() const override { return mName; };
 
@@ -90,8 +90,8 @@ class Parameter : public ParameterBase {
   }
 
   const ParameterCategory mCategory;
-  int minValue;
-  int maxValue;
+  int mMinValue;
+  int mMaxValue;
 
  protected:
   friend class ParameterManager;
