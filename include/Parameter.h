@@ -10,7 +10,7 @@
 namespace ORB_SLAM2 {
 
 // For new types of parameters add type here, a setValue below and all the stuff in ParameterManager
-typedef boost::variant<int, double, bool> ParameterTypes;
+typedef boost::variant<bool, int, float, double> ParameterTypes;
 
 class ParameterBase {
  protected:
@@ -25,9 +25,10 @@ class ParameterBase {
  public:
   virtual ~ParameterBase(){};
   virtual const ParameterTypes getVariant() const { return 0.0; };
-  virtual void setValue(const int& value){} ;
-  virtual void setValue(const double& value){} ;
   virtual void setValue(const bool& value){} ;
+  virtual void setValue(const int& value){} ;
+  virtual void setValue(const float& value){} ;
+  virtual void setValue(const double& value){} ;
   virtual const int getMinValue() const { return 0.0; };
   virtual const int getMaxValue() const { return 0.0; };
   virtual const ParameterCategory getCategory() const { return ParameterCategory::UNDEFINED; };
@@ -74,14 +75,17 @@ class Parameter : public ParameterBase {
       return false;
     }
   };
-
-
   virtual const ParameterTypes getVariant() const override { return mValue; }; // cannot return a const ref because implicitly casted
   virtual void setValue(const T& value) override { mValue = value; };
   virtual const int getMinValue() const override { return minValue; };
   virtual const int getMaxValue() const override { return maxValue; };
   virtual const ParameterCategory getCategory() const override { return mCategory; };
   virtual const std::string getName() const override { return mName; };
+
+  const T& operator()()
+  {
+    return getValue();
+  }
 
   const ParameterCategory mCategory;
   int minValue;
@@ -99,7 +103,7 @@ class Parameter : public ParameterBase {
 class ParameterManager : public ParameterBase {
   public:
 
-  typedef boost::variant<pangolin::Var<int>*, pangolin::Var<double>*, pangolin::Var<bool>*> PangolinVariants;
+  typedef boost::variant<pangolin::Var<bool>*, pangolin::Var<int>*, pangolin::Var<float>*, pangolin::Var<double>*> PangolinVariants;
   typedef std::map<std::string, std::pair<ParameterBase*, PangolinVariants>> ParameterPairMap;
 
   static ParameterPairMap& createPangolinEntries(const std::string& panel_name)
@@ -107,14 +111,17 @@ class ParameterManager : public ParameterBase {
     for(const auto& param : parameters)
     {
       switch (param->getVariant().which()) {
-        case 0: // int
+        case 0: // bool
+          createPangolinEntry<bool>(param, panel_name);
+          break;
+        case 1: // int
           createPangolinEntry<int>(param, panel_name);
           break;
-        case 1: // double
-          createPangolinEntry<double>(param, panel_name);
+        case 2: // float
+          createPangolinEntry<float>(param, panel_name);
           break;
-        case 2: // bool
-          createPangolinEntry<bool>(param, panel_name);
+        case 3: // double
+          createPangolinEntry<double>(param, panel_name);
           break;
       }
     }
@@ -130,7 +137,18 @@ class ParameterManager : public ParameterBase {
 
       const int& type = param->getVariant().which();
 
-      if (type == 0) // int
+      if (type == 0) // bool
+      {
+        auto& pango_var =  boost::get<pangolin::Var<bool>* >(pango_var_variant);
+        auto& value = boost::get<bool>(param->getVariant());
+        if(pango_var->Get() != value)
+        {
+          param->setValue(pango_var->Get());
+          static_cast<Parameter<bool>* >(param)->mChanged = true;
+          LOG(INFO) << "Parameter value of " << param->getName() <<" is: " << boost::get<bool>(param->getVariant());
+        }
+      }
+      else if (type == 1) // int
       {
         auto& pango_var =  boost::get<pangolin::Var<int>* >(pango_var_variant);
         auto& value = boost::get<int>(param->getVariant());
@@ -141,7 +159,18 @@ class ParameterManager : public ParameterBase {
           LOG(INFO) << "Parameter value of " << param->getName() <<" is: " << boost::get<int>(param->getVariant());
         }
       }
-      else if (type == 1) // double
+      else if (type == 2) // float
+      {
+        auto& pango_var =  boost::get<pangolin::Var<float>* >(pango_var_variant);
+        auto& value = boost::get<float>(param->getVariant());
+        if(pango_var->Get() != value)
+        {
+          param->setValue(pango_var->Get());
+          static_cast<Parameter<float>* >(param)->mChanged = true;
+          LOG(INFO) << "Parameter value of " << param->getName() <<" is: " << boost::get<float>(param->getVariant());
+        }
+      }
+      else if (type == 3) // double
       {
         auto& pango_var =  boost::get<pangolin::Var<double>* >(pango_var_variant);
         auto& value = boost::get<double>(param->getVariant());
@@ -150,17 +179,6 @@ class ParameterManager : public ParameterBase {
           param->setValue(pango_var->Get());
           static_cast<Parameter<double>* >(param)->mChanged = true;
           LOG(INFO) << "Parameter value of " << param->getName() <<" is: " << boost::get<double>(param->getVariant());
-        }
-      }
-      else if (type == 2) // bool
-      {
-        auto& pango_var =  boost::get<pangolin::Var<bool>* >(pango_var_variant);
-        auto& value = boost::get<bool>(param->getVariant());
-        if(pango_var->Get() != value)
-        {
-          param->setValue(pango_var->Get());
-          static_cast<Parameter<bool>* >(param)->mChanged = true;
-          LOG(INFO) << "Parameter value of " << param->getName() <<" is: " << boost::get<bool>(param->getVariant());
         }
       }
     }
