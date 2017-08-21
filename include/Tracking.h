@@ -217,7 +217,13 @@ protected:
     list<MapPoint*> mlpTemporalPoints;
 
     //minimum amount of matches between frames in order to keep tracking
+    cv::FileStorage mfSettings;
     Parameter<int> mnMinMatchesForTracking;
+    Parameter<int> nFeatures;
+    Parameter<float> fScaleFactor;
+    Parameter<int> nLevels;
+    Parameter<int> fIniThFAST;
+    Parameter<int> fMinThFAST;
 };
 
 } //namespace ORB_SLAM

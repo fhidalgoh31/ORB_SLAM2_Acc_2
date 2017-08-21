@@ -23,6 +23,7 @@
 
 #include<opencv2/core/core.hpp>
 #include<opencv2/features2d/features2d.hpp>
+#include <glog/logging.h>
 
 #include"ORBmatcher.h"
 #include"FrameDrawer.h"
@@ -46,15 +47,27 @@ namespace ORB_SLAM2
 Tracking::Tracking(System *pSys, ORBVocabulary* pVoc, FrameDrawer *pFrameDrawer, MapDrawer *pMapDrawer, Map *pMap, KeyFrameDatabase* pKFDB, const string &strSettingPath, const int sensor):
     mState(NO_IMAGES_YET), mSensor(sensor), mbOnlyTracking(false), mbVO(false), mpORBVocabulary(pVoc),
     mpKeyFrameDB(pKFDB), mpInitializer(static_cast<Initializer*>(NULL)), mpSystem(pSys), mpViewer(NULL),
-    mpFrameDrawer(pFrameDrawer), mpMapDrawer(pMapDrawer), mpMap(pMap), mnLastRelocFrameId(0), mnMinMatchesForTracking("Min tracking matches", 15, 0, 500)
+    mpFrameDrawer(pFrameDrawer), mpMapDrawer(pMapDrawer), mpMap(pMap), mnLastRelocFrameId(0)
+    , mfSettings(strSettingPath, cv::FileStorage::READ)
+    , mnMinMatchesForTracking("Min tracking matches", 15, 0, 500)
+    , nFeatures("Num features", mfSettings["ORBextractor.nFeatures"], 0, 5000)
+    , fScaleFactor("Scale factor", mfSettings["ORBextractor.scaleFactor"], 1.001, 1.5)
+    , nLevels("Num levels", mfSettings["ORBextractor.nLevels"], 1, 18)
+    , fIniThFAST("IniThFAST", mfSettings["ORBextractor.iniThFAST"], 0, 50)
+    , fMinThFAST("MinThFAST", mfSettings["ORBextractor.minThFAST"], 0, 100)
 {
     // Load camera parameters from settings file
 
-    cv::FileStorage fSettings(strSettingPath, cv::FileStorage::READ);
-    float fx = fSettings["Camera.fx"];
-    float fy = fSettings["Camera.fy"];
-    float cx = fSettings["Camera.cx"];
-    float cy = fSettings["Camera.cy"];
+    // nFeatures = Parameter<int>("Num features", mfSettings["ORBextractor.nFeatures"], 0, 5000);
+    // fScaleFactor = Parameter<float>("Scale factor", mfSettings["ORBextractor.scaleFactor"], 1, 2);
+    // nLevels = Parameter<int>("Num levels", mfSettings["ORBextractor.nLevels"], 1, 2);
+    // fIniThFAST = Parameter<int>("IniThFAST", mfSettings["ORBextractor.iniThFAST"], 0, 50);
+    // fMinThFAST = Parameter<int>("MinThFAST", mfSettings["ORBextractor.minThFAST"], 0, 100);
+    
+    float fx = mfSettings["Camera.fx"];
+    float fy = mfSettings["Camera.fy"];
+    float cx = mfSettings["Camera.cx"];
+    float cy = mfSettings["Camera.cy"];
 
     cv::Mat K = cv::Mat::eye(3,3,CV_32F);
     K.at<float>(0,0) = fx;
@@ -64,11 +77,11 @@ Tracking::Tracking(System *pSys, ORBVocabulary* pVoc, FrameDrawer *pFrameDrawer,
     K.copyTo(mK);
 
     cv::Mat DistCoef(4,1,CV_32F);
-    DistCoef.at<float>(0) = fSettings["Camera.k1"];
-    DistCoef.at<float>(1) = fSettings["Camera.k2"];
-    DistCoef.at<float>(2) = fSettings["Camera.p1"];
-    DistCoef.at<float>(3) = fSettings["Camera.p2"];
-    const float k3 = fSettings["Camera.k3"];
+    DistCoef.at<float>(0) = mfSettings["Camera.k1"];
+    DistCoef.at<float>(1) = mfSettings["Camera.k2"];
+    DistCoef.at<float>(2) = mfSettings["Camera.p1"];
+    DistCoef.at<float>(3) = mfSettings["Camera.p2"];
+    const float k3 = mfSettings["Camera.k3"];
     if(k3!=0)
     {
         DistCoef.resize(5);
@@ -76,9 +89,9 @@ Tracking::Tracking(System *pSys, ORBVocabulary* pVoc, FrameDrawer *pFrameDrawer,
     }
     DistCoef.copyTo(mDistCoef);
 
-    mbf = fSettings["Camera.bf"];
+    mbf = mfSettings["Camera.bf"];
 
-    float fps = fSettings["Camera.fps"];
+    float fps = mfSettings["Camera.fps"];
     if(fps==0)
         fps=30;
 
@@ -100,7 +113,7 @@ Tracking::Tracking(System *pSys, ORBVocabulary* pVoc, FrameDrawer *pFrameDrawer,
     cout << "- fps: " << fps << endl;
 
 
-    int nRGB = fSettings["Camera.RGB"];
+    int nRGB = mfSettings["Camera.RGB"];
     mbRGB = nRGB;
 
     if(mbRGB)
@@ -110,36 +123,37 @@ Tracking::Tracking(System *pSys, ORBVocabulary* pVoc, FrameDrawer *pFrameDrawer,
 
     // Load ORB parameters
 
-    int nFeatures = fSettings["ORBextractor.nFeatures"];
-    float fScaleFactor = fSettings["ORBextractor.scaleFactor"];
-    int nLevels = fSettings["ORBextractor.nLevels"];
-    int fIniThFAST = fSettings["ORBextractor.iniThFAST"];
-    int fMinThFAST = fSettings["ORBextractor.minThFAST"];
+    // int nFeatures = mfSettings["ORBextractor.nFeatures"];
+    // float fScaleFactor = mfSettings["ORBextractor.scaleFactor"];
+    // int nLevels = mfSettings["ORBextractor.nLevels"];
+    // int fIniThFAST = mfSettings["ORBextractor.iniThFAST"];
+    // int fMinThFAST = mfSettings["ORBextractor.minThFAST"];
 
-    mpORBextractorLeft = new ORBextractor(nFeatures,fScaleFactor,nLevels,fIniThFAST,fMinThFAST);
+
+    mpORBextractorLeft = new ORBextractor(nFeatures(),fScaleFactor(),nLevels(),fIniThFAST(),fMinThFAST());
 
     if(sensor==System::STEREO)
-        mpORBextractorRight = new ORBextractor(nFeatures,fScaleFactor,nLevels,fIniThFAST,fMinThFAST);
+        mpORBextractorRight = new ORBextractor(nFeatures(),fScaleFactor(),nLevels(),fIniThFAST(),fMinThFAST());
 
     if(sensor==System::MONOCULAR)
-        mpIniORBextractor = new ORBextractor(2*nFeatures,fScaleFactor,nLevels,fIniThFAST,fMinThFAST);
+        mpIniORBextractor = new ORBextractor(2*nFeatures(),fScaleFactor(),nLevels(),fIniThFAST(),fMinThFAST());
 
     cout << endl  << "ORB Extractor Parameters: " << endl;
-    cout << "- Number of Features: " << nFeatures << endl;
-    cout << "- Scale Levels: " << nLevels << endl;
-    cout << "- Scale Factor: " << fScaleFactor << endl;
-    cout << "- Initial Fast Threshold: " << fIniThFAST << endl;
-    cout << "- Minimum Fast Threshold: " << fMinThFAST << endl;
+    cout << "- Number of Features: " << nFeatures() << endl;
+    cout << "- Scale Levels: " << nLevels() << endl;
+    cout << "- Scale Factor: " << fScaleFactor() << endl;
+    cout << "- Initial Fast Threshold: " << fIniThFAST() << endl;
+    cout << "- Minimum Fast Threshold: " << fMinThFAST() << endl;
 
     if(sensor==System::STEREO || sensor==System::RGBD)
     {
-        mThDepth = mbf*(float)fSettings["ThDepth"]/fx;
+        mThDepth = mbf*(float)mfSettings["ThDepth"]/fx;
         cout << endl << "Depth Threshold (Close/Far Points): " << mThDepth << endl;
     }
 
     if(sensor==System::RGBD)
     {
-        mDepthMapFactor = fSettings["DepthMapFactor"];
+        mDepthMapFactor = mfSettings["DepthMapFactor"];
         if(fabs(mDepthMapFactor)<1e-5)
             mDepthMapFactor=1;
         else
@@ -266,6 +280,26 @@ cv::Mat Tracking::GrabImageMonocular(const cv::Mat &im, const double &timestamp)
 
 void Tracking::Track()
 {
+    //if any orbextractor parameter changed, recreate the orbextractor
+    if(nFeatures.checkAndResetIfChanged() ||
+       fScaleFactor.checkAndResetIfChanged() ||
+       nLevels.checkAndResetIfChanged() ||
+       fIniThFAST.checkAndResetIfChanged() ||
+       fMinThFAST.checkAndResetIfChanged())
+    {
+        DLOG(INFO) << "ORBExtractor parameter has changed, recreating ORBExtractor";
+        delete mpORBextractorLeft;
+        mpORBextractorLeft = new ORBextractor(nFeatures(),fScaleFactor(),nLevels(),fIniThFAST(),fMinThFAST());
+
+        if(mSensor==System::STEREO)
+        delete mpORBextractorRight;
+            mpORBextractorRight = new ORBextractor(nFeatures(),fScaleFactor(),nLevels(),fIniThFAST(),fMinThFAST());
+
+        if(mSensor==System::MONOCULAR)
+        delete mpIniORBextractor;
+            mpIniORBextractor = new ORBextractor(2*nFeatures(),fScaleFactor(),nLevels(),fIniThFAST(),fMinThFAST());
+    }
+
     if(mState==NO_IMAGES_YET)
     {
         mState = NOT_INITIALIZED;
@@ -891,7 +925,6 @@ bool Tracking::TrackWithMotionModel()
         nmatches = matcher.SearchByProjection(mCurrentFrame,mLastFrame,2*th,mSensor==System::MONOCULAR);
     }
 
-    std::cout << "mnMinMatchesForTracking:" << mnMinMatchesForTracking.getValue() << std::endl;
     if(nmatches<mnMinMatchesForTracking.getValue())
         return false;
 
@@ -1552,11 +1585,10 @@ void Tracking::Reset()
 
 void Tracking::ChangeCalibration(const string &strSettingPath)
 {
-    cv::FileStorage fSettings(strSettingPath, cv::FileStorage::READ);
-    float fx = fSettings["Camera.fx"];
-    float fy = fSettings["Camera.fy"];
-    float cx = fSettings["Camera.cx"];
-    float cy = fSettings["Camera.cy"];
+    float fx = mfSettings["Camera.fx"];
+    float fy = mfSettings["Camera.fy"];
+    float cx = mfSettings["Camera.cx"];
+    float cy = mfSettings["Camera.cy"];
 
     cv::Mat K = cv::Mat::eye(3,3,CV_32F);
     K.at<float>(0,0) = fx;
@@ -1566,11 +1598,11 @@ void Tracking::ChangeCalibration(const string &strSettingPath)
     K.copyTo(mK);
 
     cv::Mat DistCoef(4,1,CV_32F);
-    DistCoef.at<float>(0) = fSettings["Camera.k1"];
-    DistCoef.at<float>(1) = fSettings["Camera.k2"];
-    DistCoef.at<float>(2) = fSettings["Camera.p1"];
-    DistCoef.at<float>(3) = fSettings["Camera.p2"];
-    const float k3 = fSettings["Camera.k3"];
+    DistCoef.at<float>(0) = mfSettings["Camera.k1"];
+    DistCoef.at<float>(1) = mfSettings["Camera.k2"];
+    DistCoef.at<float>(2) = mfSettings["Camera.p1"];
+    DistCoef.at<float>(3) = mfSettings["Camera.p2"];
+    const float k3 = mfSettings["Camera.k3"];
     if(k3!=0)
     {
         DistCoef.resize(5);
@@ -1578,7 +1610,7 @@ void Tracking::ChangeCalibration(const string &strSettingPath)
     }
     DistCoef.copyTo(mDistCoef);
 
-    mbf = fSettings["Camera.bf"];
+    mbf = mfSettings["Camera.bf"];
 
     Frame::mbInitialComputations = true;
 }
