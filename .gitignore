@@ -11,7 +11,7 @@ Examples/ROS/ORB_SLAM2/Stereo
 Examples/ROS/ORB_SLAM2/build/
 Examples/Stereo/stereo_euroc
 Examples/Stereo/stereo_kitti
-KeyFrameTrajectory.txt
+KeyFrameTrajectory*
 Thirdparty/DBoW2/build/
 Thirdparty/DBoW2/lib/
 Thirdparty/g2o/build/
@@ -21,4 +21,5 @@ Vocabulary/ORBvoc.txt
 build/
 *~
 lib/
+compile_commands.json
 
