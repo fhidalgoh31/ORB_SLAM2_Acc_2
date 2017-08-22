@@ -534,7 +534,6 @@ void ExtractorNode::DivideNode(ExtractorNode &n1, ExtractorNode &n2, ExtractorNo
         n3.bNoMore = true;
     if(n4.vKeys.size()==1)
         n4.bNoMore = true;
-
 }
 
 vector<cv::KeyPoint> ORBextractor::DistributeOctTree(const vector<cv::KeyPoint>& vToDistributeKeys, const int &minX,
@@ -543,6 +542,7 @@ vector<cv::KeyPoint> ORBextractor::DistributeOctTree(const vector<cv::KeyPoint>&
     // Compute how many initial nodes
     const int nIni = round(static_cast<float>(maxX-minX)/(maxY-minY));
 
+    // TODO: this could possibly crash if the image was much larger in height than in width
     const float hX = static_cast<float>(maxX-minX)/nIni;
 
     list<ExtractorNode> lNodes;
@@ -572,19 +572,27 @@ vector<cv::KeyPoint> ORBextractor::DistributeOctTree(const vector<cv::KeyPoint>&
 
     list<ExtractorNode>::iterator lit = lNodes.begin();
 
+    // int counter = 0;
     while(lit!=lNodes.end())
     {
+        // counter++;
         if(lit->vKeys.size()==1)
         {
             lit->bNoMore=true;
             lit++;
         }
         else if(lit->vKeys.empty())
+        {
             lit = lNodes.erase(lit);
+        }
         else
+        {
             lit++;
+        }
     }
 
+    // DLOG(INFO) << "";
+    // DLOG(INFO) << "Amount of nodes after thinning: " << lNodes.size();
     bool bFinish = false;
 
     int iteration = 0;
@@ -667,13 +675,24 @@ vector<cv::KeyPoint> ORBextractor::DistributeOctTree(const vector<cv::KeyPoint>&
 
         // Finish if there are more nodes than required features
         // or all nodes contain just one point
+        // DLOG(INFO) << "Now have " << lNodes.size() << " nodes of max " << N << " features.";
+        // DLOG(INFO) << "With " << nToExpand << " nodes to expand";
         if((int)lNodes.size()>=N || (int)lNodes.size()==prevSize)
         {
+            if ((int)lNodes.size()>=N) {
+                // DLOG(INFO) << "Have more nodes than features wanted. Stopping now";
+            }
+            else if ((int)lNodes.size()==prevSize) {
+                // DLOG(INFO) << "Nodes all split up and dividing done.";
+            }
             bFinish = true;
         }
+        // when there are still lots of nodes to expand but not actually
+        // that many more features need to be created handle it here
+        // it just assumes that there will be about 3 features i every node to expand
         else if(((int)lNodes.size()+nToExpand*3)>N)
         {
-
+            // DLOG(INFO) << "Need to do extra steps";
             while(!bFinish)
             {
 
@@ -760,6 +779,7 @@ vector<cv::KeyPoint> ORBextractor::DistributeOctTree(const vector<cv::KeyPoint>&
         vResultKeys.push_back(*pKP);
     }
 
+    // DLOG(INFO) << "Asked for " << N << " features and got " << vResultKeys.size();
     return vResultKeys;
 }
 
@@ -791,6 +811,7 @@ void ORBextractor::ComputeKeyPointsOctTree(vector<vector<KeyPoint> >& allKeypoin
         {
             const float iniY =minBorderY+i*hCell;
             float maxY = iniY+hCell+6;
+            // float oldmaxY = maxY;
 
             if(iniY>=maxBorderY-3)
                 continue;
@@ -801,10 +822,15 @@ void ORBextractor::ComputeKeyPointsOctTree(vector<vector<KeyPoint> >& allKeypoin
             {
                 const float iniX =minBorderX+j*wCell;
                 float maxX = iniX+wCell+6;
+                // DLOG(INFO) << "Supposed cell position y: " << iniY << "-" << oldmaxY;
+                // DLOG(INFO) << "Supposed cell position x: " << iniX << "-" << maxX;
                 if(iniX>=maxBorderX-6)
                     continue;
                 if(maxX>maxBorderX)
                     maxX = maxBorderX;
+                // DLOG(INFO) << "Actual cell position y: " << iniY << "-" << maxY;
+                // DLOG(INFO) << "Actual cell position x: " << iniX << "-" << maxX;
+
 
                 vector<cv::KeyPoint> vKeysCell;
                 FAST(mvImagePyramid[level].rowRange(iniY,maxY).colRange(iniX,maxX),
@@ -820,9 +846,11 @@ void ORBextractor::ComputeKeyPointsOctTree(vector<vector<KeyPoint> >& allKeypoin
                 {
                     for(vector<cv::KeyPoint>::iterator vit=vKeysCell.begin(); vit!=vKeysCell.end();vit++)
                     {
+                        // DLOG(INFO) << "Cell keypoint: x = " << (*vit).pt.x << ", y = " << (*vit).pt.y;
                         (*vit).pt.x+=j*wCell;
                         (*vit).pt.y+=i*hCell;
                         vToDistributeKeys.push_back(*vit);
+                        // DLOG(INFO) << "Moved keypoint: x = " << (*vit).pt.x << ", y = " << (*vit).pt.y;
                     }
                 }
 
