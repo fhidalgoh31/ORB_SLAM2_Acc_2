@@ -19,6 +19,7 @@ cd ../../glog
 
 echo "Configuring and building Thirdparty/glog ..."
 
+./autogen.sh
 ./configure --prefix=$PWD
 make
 make install
