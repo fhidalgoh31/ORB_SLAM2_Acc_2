@@ -148,7 +148,7 @@ class ParameterManager : public ParameterBase {
         {
           param->setValue(pango_var->Get());
           static_cast<Parameter<bool>* >(param)->mChanged = true;
-          LOG(INFO) << "Parameter value of " << param->getName() <<" is: " << boost::get<bool>(param->getVariant());
+          DLOG(INFO) << "Parameter value of " << param->getName() <<" is: " << boost::get<bool>(param->getVariant());
         }
       }
       else if (type == 1) // int
@@ -159,7 +159,7 @@ class ParameterManager : public ParameterBase {
         {
           param->setValue(pango_var->Get());
           static_cast<Parameter<int>* >(param)->mChanged = true;
-          LOG(INFO) << "Parameter value of " << param->getName() <<" is: " << boost::get<int>(param->getVariant());
+          DLOG(INFO) << "Parameter value of " << param->getName() <<" is: " << boost::get<int>(param->getVariant());
         }
       }
       else if (type == 2) // float
@@ -170,7 +170,7 @@ class ParameterManager : public ParameterBase {
         {
           param->setValue(pango_var->Get());
           static_cast<Parameter<float>* >(param)->mChanged = true;
-          LOG(INFO) << "Parameter value of " << param->getName() <<" is: " << boost::get<float>(param->getVariant());
+          DLOG(INFO) << "Parameter value of " << param->getName() <<" is: " << boost::get<float>(param->getVariant());
         }
       }
       else if (type == 3) // double
@@ -181,7 +181,7 @@ class ParameterManager : public ParameterBase {
         {
           param->setValue(pango_var->Get());
           static_cast<Parameter<double>* >(param)->mChanged = true;
-          LOG(INFO) << "Parameter value of " << param->getName() <<" is: " << boost::get<double>(param->getVariant());
+          DLOG(INFO) << "Parameter value of " << param->getName() <<" is: " << boost::get<double>(param->getVariant());
         }
       }
     }
