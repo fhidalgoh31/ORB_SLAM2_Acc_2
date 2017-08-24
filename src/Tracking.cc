@@ -63,7 +63,7 @@ Tracking::Tracking(System *pSys, ORBVocabulary* pVoc, FrameDrawer *pFrameDrawer,
     // nLevels = Parameter<int>("Num levels", mfSettings["ORBextractor.nLevels"], 1, 2);
     // fIniThFAST = Parameter<int>("IniThFAST", mfSettings["ORBextractor.iniThFAST"], 0, 50);
     // fMinThFAST = Parameter<int>("MinThFAST", mfSettings["ORBextractor.minThFAST"], 0, 100);
-    
+
     float fx = mfSettings["Camera.fx"];
     float fy = mfSettings["Camera.fy"];
     float cx = mfSettings["Camera.cx"];
@@ -631,6 +631,9 @@ void Tracking::MonocularInitialization()
 
         // Find correspondences
         ORBmatcher matcher(0.9,true);
+        // on first call the mvbprevmatched points are simply all keys in the frame before
+        //TODO : the windowsize (100) should really be dependant on the image size, 100 might not be enough for a large image
+        //and too much for smaller image
         int nmatches = matcher.SearchForInitialization(mInitialFrame,mCurrentFrame,mvbPrevMatched,mvIniMatches,100);
 
         // Check if there are enough correspondences

@@ -34,6 +34,8 @@
 
 namespace ORB_SLAM2
 {
+//TODO : The size of the grid should depend on the image size, this way small images get very tiny
+//cells and large images very large cells
 #define FRAME_GRID_ROWS 48
 #define FRAME_GRID_COLS 64
 
@@ -86,6 +88,7 @@ public:
     // Compute the cell of a keypoint (return false if outside the grid)
     bool PosInGrid(const cv::KeyPoint &kp, int &posX, int &posY);
 
+    // given a certain point (x, y) this function searches all grid cells in the vicinity of it with a the windowsize r
     vector<size_t> GetFeaturesInArea(const float &x, const float  &y, const float  &r, const int minLevel=-1, const int maxLevel=-1) const;
 
     // Search a match for each keypoint in the left image to a keypoint in the right image.
@@ -158,6 +161,7 @@ public:
     // Keypoints are assigned to cells in a grid to reduce matching complexity when projecting MapPoints.
     static float mfGridElementWidthInv;
     static float mfGridElementHeightInv;
+    //mgrid remembers all indicies of the features located in a specific cell
     std::vector<std::size_t> mGrid[FRAME_GRID_COLS][FRAME_GRID_ROWS];
 
     // Camera pose.

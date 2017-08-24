@@ -22,6 +22,7 @@
 #include "Converter.h"
 #include "ORBmatcher.h"
 #include <thread>
+#include <glog/logging.h>
 
 namespace ORB_SLAM2
 {
@@ -89,7 +90,7 @@ Frame::Frame(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timeSt
 
     ComputeStereoMatches();
 
-    mvpMapPoints = vector<MapPoint*>(N,static_cast<MapPoint*>(NULL));    
+    mvpMapPoints = vector<MapPoint*>(N,static_cast<MapPoint*>(NULL));
     mvbOutlier = vector<bool>(N,false);
 
 
@@ -125,7 +126,7 @@ Frame::Frame(const cv::Mat &imGray, const cv::Mat &imDepth, const double &timeSt
 
     // Scale Level Info
     mnScaleLevels = mpORBextractorLeft->GetLevels();
-    mfScaleFactor = mpORBextractorLeft->GetScaleFactor();    
+    mfScaleFactor = mpORBextractorLeft->GetScaleFactor();
     mfLogScaleFactor = log(mfScaleFactor);
     mvScaleFactors = mpORBextractorLeft->GetScaleFactors();
     mvInvScaleFactors = mpORBextractorLeft->GetInverseScaleFactors();
@@ -259,7 +260,7 @@ void Frame::SetPose(cv::Mat Tcw)
 }
 
 void Frame::UpdatePoseMatrices()
-{ 
+{
     mRcw = mTcw.rowRange(0,3).colRange(0,3);
     mRwc = mRcw.t();
     mtcw = mTcw.rowRange(0,3).col(3);
@@ -271,7 +272,7 @@ bool Frame::isInFrustum(MapPoint *pMP, float viewingCosLimit)
     pMP->mbTrackInView = false;
 
     // 3D in absolute coordinates
-    cv::Mat P = pMP->GetWorldPos(); 
+    cv::Mat P = pMP->GetWorldPos();
 
     // 3D in camera coordinates
     const cv::Mat Pc = mRcw*P+mtcw;
@@ -328,7 +329,10 @@ vector<size_t> Frame::GetFeaturesInArea(const float &x, const float  &y, const f
 {
     vector<size_t> vIndices;
     vIndices.reserve(N);
+    // FRAME_GRID_COLS = 64
+    // FRAME_GRID_COLS = 48
 
+    // DLOG(INFO) << "Looking for features in vicinity of : (" << x << ", " << y << ")";
     const int nMinCellX = max(0,(int)floor((x-mnMinX-r)*mfGridElementWidthInv));
     if(nMinCellX>=FRAME_GRID_COLS)
         return vIndices;
@@ -345,6 +349,7 @@ vector<size_t> Frame::GetFeaturesInArea(const float &x, const float  &y, const f
     if(nMaxCellY<0)
         return vIndices;
 
+    // DLOG(INFO) << "minCellX: " << nMinCellX << ", minCellY: " << nMinCellY << ", maxCellX: " << nMaxCellX << ", maxCellY: " << nMaxCellY;
     const bool bCheckLevels = (minLevel>0) || (maxLevel>=0);
 
     for(int ix = nMinCellX; ix<=nMaxCellX; ix++)
@@ -367,6 +372,8 @@ vector<size_t> Frame::GetFeaturesInArea(const float &x, const float  &y, const f
                             continue;
                 }
 
+                //TODO: could this check maybe be a bit too much?
+                // descriptor distance is checked later anyway
                 const float distx = kpUn.pt.x-x;
                 const float disty = kpUn.pt.y-y;
 
@@ -452,7 +459,8 @@ void Frame::ComputeImageBounds(const cv::Mat &imLeft)
         mnMaxX = max(mat.at<float>(1,0),mat.at<float>(3,0));
         mnMinY = min(mat.at<float>(0,1),mat.at<float>(1,1));
         mnMaxY = max(mat.at<float>(2,1),mat.at<float>(3,1));
-
+        // DLOG(INFO) << "Size of distorted image: " << imLeft.cols << " x " << imLeft.rows;
+        // DLOG(INFO) << "Size of undistorted image: " << mnMaxX - mnMinX << "x" << mnMaxY - mnMinY;
     }
     else
     {

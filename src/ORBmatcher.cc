@@ -26,6 +26,7 @@
 #include<opencv2/features2d/features2d.hpp>
 
 #include "Thirdparty/DBoW2/DBoW2/FeatureVector.h"
+#include <glog/logging.h>
 
 #include<stdint-gcc.h>
 
@@ -407,6 +408,7 @@ int ORBmatcher::SearchForInitialization(Frame &F1, Frame &F2, vector<cv::Point2f
     int nmatches=0;
     vnMatches12 = vector<int>(F1.mvKeysUn.size(),-1);
 
+    //HISTO_LENGTH = 30
     vector<int> rotHist[HISTO_LENGTH];
     for(int i=0;i<HISTO_LENGTH;i++)
         rotHist[i].reserve(500);
@@ -422,8 +424,10 @@ int ORBmatcher::SearchForInitialization(Frame &F1, Frame &F2, vector<cv::Point2f
         if(level1>0)
             continue;
 
+        // look for features in an area around keypoint from initial frame
         vector<size_t> vIndices2 = F2.GetFeaturesInArea(vbPrevMatched[i1].x,vbPrevMatched[i1].y, windowSize,level1,level1);
 
+        // if no features around vbPrevMatched[i1] in new image then look for next feature
         if(vIndices2.empty())
             continue;
 
@@ -433,6 +437,7 @@ int ORBmatcher::SearchForInitialization(Frame &F1, Frame &F2, vector<cv::Point2f
         int bestDist2 = INT_MAX;
         int bestIdx2 = -1;
 
+        // calculate the descriptor distance between current point and all points in vicinity
         for(vector<size_t>::iterator vit=vIndices2.begin(); vit!=vIndices2.end(); vit++)
         {
             size_t i2 = *vit;
@@ -456,8 +461,10 @@ int ORBmatcher::SearchForInitialization(Frame &F1, Frame &F2, vector<cv::Point2f
             }
         }
 
+        // if bestdist is smaller than 50
         if(bestDist<=TH_LOW)
         {
+            //mfnnratio is set to 0.9 by track() so bestDist needs to be shorter than 0.9* the 2nd best distance
             if(bestDist<(float)bestDist2*mfNNratio)
             {
                 if(vnMatches21[bestIdx2]>=0)
@@ -472,10 +479,14 @@ int ORBmatcher::SearchForInitialization(Frame &F1, Frame &F2, vector<cv::Point2f
 
                 if(mbCheckOrientation)
                 {
+                    // calculate rotation between the two distance matched points
                     float rot = F1.mvKeysUn[i1].angle-F2.mvKeysUn[bestIdx2].angle;
                     if(rot<0.0)
                         rot+=360.0f;
+                    // sort the rotations into histogram bins according to their size
+                    //TODO : Why is the HISTO_LENGTH 30 when there can only be 12 bins max?
                     int bin = round(rot*factor);
+                    // DLOG(INFO) << "Bin: " << bin;
                     if(bin==HISTO_LENGTH)
                         bin=0;
                     assert(bin>=0 && bin<HISTO_LENGTH);
@@ -496,11 +507,16 @@ int ORBmatcher::SearchForInitialization(Frame &F1, Frame &F2, vector<cv::Point2f
 
         for(int i=0; i<HISTO_LENGTH; i++)
         {
+            // don't check maximas
             if(i==ind1 || i==ind2 || i==ind3)
                 continue;
+
+            // check each match that deviates from the most common rotation values
             for(size_t j=0, jend=rotHist[i].size(); j<jend; j++)
             {
                 int idx1 = rotHist[i][j];
+                // if a match has a roation value which differs from the three most
+                // common rotations observed erase it from matches
                 if(vnMatches12[idx1]>=0)
                 {
                     vnMatches12[idx1]=-1;
@@ -1604,6 +1620,8 @@ void ORBmatcher::ComputeThreeMaxima(vector<int>* histo, const int L, int &ind1, 
     int max2=0;
     int max3=0;
 
+    // searches for the 3 biggest peaks in the histogram
+    // (three most common value ranges)
     for(int i=0; i<L; i++)
     {
         const int s = histo[i].size();
@@ -1630,6 +1648,7 @@ void ORBmatcher::ComputeThreeMaxima(vector<int>* histo, const int L, int &ind1, 
         }
     }
 
+    // if max2 or max3 are much smaller than max1 just ignore them
     if(max2<0.1f*(float)max1)
     {
         ind2=-1;
