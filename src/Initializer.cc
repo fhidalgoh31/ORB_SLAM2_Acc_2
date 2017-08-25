@@ -530,6 +530,9 @@ bool Initializer::ReconstructF(vector<bool> &vbMatchesInliers, cv::Mat &F21, cv:
     // If there is not a clear winner or not enough triangulated points reject initialization
     if(maxGood<nMinGood || nsimilar>1)
     {
+        DLOG(WARNING) << "Initialization failed because no hypotheses was clearly better than the others.";
+        DLOG(WARNING) << "maxGood<nMinGood || nsimilar>1: " << maxGood << ">" << nMinGood
+                      << " || " << nsimilar << ">1";
         return false;
     }
 
@@ -545,6 +548,8 @@ bool Initializer::ReconstructF(vector<bool> &vbMatchesInliers, cv::Mat &F21, cv:
             t1.copyTo(t21);
             return true;
         }
+        DLOG(WARNING) << "Initialization failed because there wasn't enough parallax.";
+        DLOG(WARNING) << "parallax1>minParallax: " << parallax1 << "<" << minParallax ;
     }else if(maxGood==nGood2)
     {
         if(parallax2>minParallax)
@@ -556,6 +561,8 @@ bool Initializer::ReconstructF(vector<bool> &vbMatchesInliers, cv::Mat &F21, cv:
             t1.copyTo(t21);
             return true;
         }
+        DLOG(WARNING) << "Initialization failed because there wasn't enough parallax.";
+        DLOG(WARNING) << "parallax2>minParallax: " << parallax2 << "<" << minParallax ;
     }else if(maxGood==nGood3)
     {
         if(parallax3>minParallax)
@@ -567,6 +574,8 @@ bool Initializer::ReconstructF(vector<bool> &vbMatchesInliers, cv::Mat &F21, cv:
             t2.copyTo(t21);
             return true;
         }
+        DLOG(WARNING) << "Initialization failed because there wasn't enough parallax.";
+        DLOG(WARNING) << "parallax3>minParallax: " << parallax3 << "<" << minParallax ;
     }else if(maxGood==nGood4)
     {
         if(parallax4>minParallax)
@@ -578,6 +587,8 @@ bool Initializer::ReconstructF(vector<bool> &vbMatchesInliers, cv::Mat &F21, cv:
             t2.copyTo(t21);
             return true;
         }
+        DLOG(WARNING) << "Initialization failed because there wasn't enough parallax.";
+        DLOG(WARNING) << "parallax4>minParallax: " << parallax4 << "<" << minParallax ;
     }
 
     return false;
@@ -746,13 +757,13 @@ bool Initializer::ReconstructH(vector<bool> &vbMatchesInliers, cv::Mat &H21, cv:
     DLOG(WARNING) << "Initialization failed because quality of reconstruction was too low.";
     DLOG(WARNING) << "Causes are marked by a \"1\": "
         << "\n    Best not 0.75 times better than second best: " << (secondBestGood<0.75*bestGood)
-                  << "secondBestGood = " << secondBestGood << ", bestGood = " << bestGood
+                  << "secondBestGood = " << secondBestGood << ", bestGood = "        << bestGood
         << "\n    Too little parallax:                         " << (bestParallax>=minParallax)
-                  << "bestParallax = " << bestParallax << ", minParallax = " << minParallax
+                  << "bestParallax = "   << bestParallax   << ", minParallax = "     << minParallax
         << "\n    Not enough well triangulated points:         " << (bestGood>minTriangulated)
-                  << "bestGood = " << bestGood << ", minTriangulated = " << minTriangulated
+                  << "bestGood = "       << bestGood       << ", minTriangulated = " << minTriangulated
         << "\n    Not enough inliers triangulated:             " << (bestGood>0.9*N)
-                  << "bestGood = " << bestGood << ", 0.9*N = " << N;
+                  << "bestGood = "       << bestGood       << ", 0.9*N = "           << N;
     return false;
 }
 

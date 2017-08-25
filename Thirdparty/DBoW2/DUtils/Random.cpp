@@ -1,4 +1,4 @@
-/*	
+/*
  * File: Random.cpp
  * Project: DUtils library
  * Author: Dorian Galvez-Lopez
@@ -18,7 +18,7 @@ bool DUtils::Random::m_already_seeded = false;
 void DUtils::Random::SeedRand(){
 	Timestamp time;
 	time.setToCurrentTime();
-	srand((unsigned)time.getFloatTime()); 
+	srand((unsigned)time.getFloatTime());
 }
 
 void DUtils::Random::SeedRandOnce()
@@ -32,7 +32,7 @@ void DUtils::Random::SeedRandOnce()
 
 void DUtils::Random::SeedRand(int seed)
 {
-	srand(seed); 
+	srand(seed);
 }
 
 void DUtils::Random::SeedRandOnce(int seed)
@@ -81,14 +81,14 @@ DUtils::Random::UnrepeatedRandomizer::UnrepeatedRandomizer
 int DUtils::Random::UnrepeatedRandomizer::get()
 {
   if(empty()) createValues();
-  
+
   DUtils::Random::SeedRandOnce();
-  
+
   int k = DUtils::Random::RandomInt(0, m_values.size()-1);
   int ret = m_values[k];
   m_values[k] = m_values.back();
   m_values.pop_back();
-  
+
   return ret;
 }
 
@@ -97,7 +97,7 @@ int DUtils::Random::UnrepeatedRandomizer::get()
 void DUtils::Random::UnrepeatedRandomizer::createValues()
 {
   int n = m_max - m_min + 1;
-  
+
   m_values.resize(n);
   for(int i = 0; i < n; ++i) m_values[i] = m_min + i;
 }
@@ -111,7 +111,7 @@ void DUtils::Random::UnrepeatedRandomizer::reset()
 
 // ---------------------------------------------------------------------------
 
-DUtils::Random::UnrepeatedRandomizer& 
+DUtils::Random::UnrepeatedRandomizer&
 DUtils::Random::UnrepeatedRandomizer::operator=
   (const DUtils::Random::UnrepeatedRandomizer& rnd)
 {
