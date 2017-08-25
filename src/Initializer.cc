@@ -51,6 +51,8 @@ bool Initializer::Initialize(const Frame &CurrentFrame, const vector<int> &vMatc
     mvMatches12.clear();
     mvMatches12.reserve(mvKeys2.size());
     mvbMatched1.resize(mvKeys1.size());
+    // go through all matches found between reference frame and current frame and make pairs
+    // of index and match, mark which indicies were matched and which weren't
     for(size_t i=0, iend=vMatches12.size();i<iend; i++)
     {
         if(vMatches12[i]>=0)
@@ -113,10 +115,17 @@ bool Initializer::Initialize(const Frame &CurrentFrame, const vector<int> &vMatc
 
     // Try to reconstruct from homography or fundamental depending on the ratio (0.40-0.45)
     if(RH>0.40)
+    {
+        DLOG(INFO) << "Using homography for initialization. RH = " << RH;
         return ReconstructH(vbMatchesInliersH,H,mK,R21,t21,vP3D,vbTriangulated,1.0,50);
+    }
     else //if(pF_HF>0.6)
+    {
+        DLOG(INFO) << "Using fundamental matrix for initialization. RH = " << RH;
         return ReconstructF(vbMatchesInliersF,F,mK,R21,t21,vP3D,vbTriangulated,1.0,50);
+    }
 
+    // this is never reached
     return false;
 }
 
@@ -332,6 +341,7 @@ float Initializer::CheckHomography(const cv::Mat &H21, const cv::Mat &H12, vecto
 
     const float th = 5.991;
 
+    //this is 1 for monocular
     const float invSigmaSquare = 1.0/(sigma*sigma);
 
     for(int i=0; i<N; i++)
@@ -355,11 +365,15 @@ float Initializer::CheckHomography(const cv::Mat &H21, const cv::Mat &H12, vecto
 
         const float squareDist1 = (u1-u2in1)*(u1-u2in1)+(v1-v2in1)*(v1-v2in1);
 
+        //larger sigma would increase the chiSquare
         const float chiSquare1 = squareDist1*invSigmaSquare;
 
+        // for sigma = 1 if the squared distance is larger than
+        // 5.991 then it is considered to be an outlier -> larger sigma -> less inliers
         if(chiSquare1>th)
             bIn = false;
         else
+            // score accumulates how far away each point was from the threshold
             score += th - chiSquare1;
 
         // Reprojection error in second image
@@ -596,6 +610,7 @@ bool Initializer::ReconstructH(vector<bool> &vbMatchesInliers, cv::Mat &H21, cv:
 
     if(d1/d2<1.00001 || d2/d3<1.00001)
     {
+        DLOG(INFO) << "Initialization failed because singular values are inappropriate.";
         return false;
     }
 
@@ -728,6 +743,16 @@ bool Initializer::ReconstructH(vector<bool> &vbMatchesInliers, cv::Mat &H21, cv:
         return true;
     }
 
+    DLOG(WARNING) << "Initialization failed because quality of reconstruction was too low.";
+    DLOG(WARNING) << "Causes are marked by a \"1\": "
+        << "\n    Best not 0.75 times better than second best: " << (secondBestGood<0.75*bestGood)
+                  << "secondBestGood = " << secondBestGood << ", bestGood = " << bestGood
+        << "\n    Too little parallax:                         " << (bestParallax>=minParallax)
+                  << "bestParallax = " << bestParallax << ", minParallax = " << minParallax
+        << "\n    Not enough well triangulated points:         " << (bestGood>minTriangulated)
+                  << "bestGood = " << bestGood << ", minTriangulated = " << minTriangulated
+        << "\n    Not enough inliers triangulated:             " << (bestGood>0.9*N)
+                  << "bestGood = " << bestGood << ", 0.9*N = " << N;
     return false;
 }
 
