@@ -145,8 +145,8 @@ bool LoopClosing::DetectLoop()
     {
         mpKeyFrameDB->add(mpCurrentKF);
         //TODO : the groups are only cleared here, what happens
-        // if a there is no KeyFrame without candidates and the Groups are never
-        // cleared before a new possibly loop closure was investigated?
+        // if a there is no KeyFrame without candidates and the groups are never
+        // cleared before a new possible loop closure was investigated?
         // Would it just get accepted straight away?
         mvConsistentGroups.clear();
         mpCurrentKF->SetErase();
