@@ -35,13 +35,14 @@ using namespace std;
 namespace ORB_SLAM2
 {
 
-const int ORBmatcher::TH_HIGH = 100;
-const int ORBmatcher::TH_LOW = 50;
-const int ORBmatcher::HISTO_LENGTH = 30;
+const int ORBmatcher::TH_HIGH = 100; //param
+const int ORBmatcher::TH_LOW = 50; //param
+const int ORBmatcher::HISTO_LENGTH = 30; //param
 
 ORBmatcher::ORBmatcher(float nnratio, bool checkOri): mfNNratio(nnratio), mbCheckOrientation(checkOri)
 {
 }
+
 
 int ORBmatcher::SearchByProjection(Frame &F, const vector<MapPoint*> &vpMapPoints, const float th)
 {
@@ -132,9 +133,9 @@ int ORBmatcher::SearchByProjection(Frame &F, const vector<MapPoint*> &vpMapPoint
 float ORBmatcher::RadiusByViewingCos(const float &viewCos)
 {
     if(viewCos>0.998)
-        return 2.5;
+        return 2.5; //param
     else
-        return 4.0;
+        return 4.0; //param
 }
 
 
@@ -226,9 +227,9 @@ int ORBmatcher::SearchByBoW(KeyFrame* pKF,Frame &F, vector<MapPoint*> &vpMapPoin
                     }
                 }
 
-                if(bestDist1<=TH_LOW)
+                if(bestDist1<=TH_LOW) //param
                 {
-                    if(static_cast<float>(bestDist1)<mfNNratio*static_cast<float>(bestDist2))
+                    if(static_cast<float>(bestDist1)<mfNNratio*static_cast<float>(bestDist2)) //param
                     {
                         vpMapPointMatches[bestIdxF]=pMP;
 
@@ -462,7 +463,7 @@ int ORBmatcher::SearchForInitialization(Frame &F1, Frame &F2, vector<cv::Point2f
         }
 
         // if bestdist is smaller than 50
-        if(bestDist<=TH_LOW)
+        if(bestDist<=TH_LOW) //param
         {
             //mfnnratio is set to 0.9 by track() so bestDist needs to be shorter than 0.9* the 2nd best distance
             if(bestDist<(float)bestDist2*mfNNratio)
@@ -611,7 +612,7 @@ int ORBmatcher::SearchByBoW(KeyFrame *pKF1, KeyFrame *pKF2, vector<MapPoint *> &
                     }
                 }
 
-                if(bestDist1<TH_LOW)
+                if(bestDist1<TH_LOW) //param
                 {
                     if(static_cast<float>(bestDist1)<mfNNratio*static_cast<float>(bestDist2))
                     {
@@ -728,7 +729,7 @@ int ORBmatcher::SearchForTriangulation(KeyFrame *pKF1, KeyFrame *pKF2, cv::Mat F
 
                 const cv::Mat &d1 = pKF1->mDescriptors.row(idx1);
 
-                int bestDist = TH_LOW;
+                int bestDist = TH_LOW; //param
                 int bestIdx2 = -1;
 
                 for(size_t i2=0, iend2=f2it->second.size(); i2<iend2; i2++)
@@ -965,7 +966,7 @@ int ORBmatcher::Fuse(KeyFrame *pKF, const vector<MapPoint *> &vpMapPoints, const
         }
 
         // If there is already a MapPoint replace otherwise add new measurement
-        if(bestDist<=TH_LOW)
+        if(bestDist<=TH_LOW) //param
         {
             MapPoint* pMPinKF = pKF->GetMapPoint(bestIdx);
             if(pMPinKF)
@@ -1062,9 +1063,9 @@ int ORBmatcher::Fuse(KeyFrame *pKF, cv::Mat Scw, const vector<MapPoint *> &vpPoi
         const int nPredictedLevel = pMP->PredictScale(dist3D,pKF);
 
         // Search in a radius
-        const float radius = th*pKF->mvScaleFactors[nPredictedLevel];
+        const float radius = th*pKF->mvScaleFactors[nPredictedLevel]; //param
 
-        const vector<size_t> vIndices = pKF->GetFeaturesInArea(u,v,radius);
+        const vector<size_t> vIndices = pKF->GetFeaturesInArea(u,v,radius); //param
 
         if(vIndices.empty())
             continue;
@@ -1095,7 +1096,7 @@ int ORBmatcher::Fuse(KeyFrame *pKF, cv::Mat Scw, const vector<MapPoint *> &vpPoi
         }
 
         // If there is already a MapPoint replace otherwise add new measurement
-        if(bestDist<=TH_LOW)
+        if(bestDist<=TH_LOW) //param
         {
             MapPoint* pMPinKF = pKF->GetMapPoint(bestIdx);
             if(pMPinKF)
@@ -1282,7 +1283,7 @@ int ORBmatcher::SearchBySim3(KeyFrame *pKF1, KeyFrame *pKF2, vector<MapPoint*> &
         const int nPredictedLevel = pMP->PredictScale(dist3D,pKF1);
 
         // Search in a radius of 2.5*sigma(ScaleLevel)
-        const float radius = th*pKF1->mvScaleFactors[nPredictedLevel];
+        const float radius = th*pKF1->mvScaleFactors[nPredictedLevel]; //param
 
         const vector<size_t> vIndices = pKF1->GetFeaturesInArea(u,v,radius);
 
@@ -1539,7 +1540,7 @@ int ORBmatcher::SearchByProjection(Frame &CurrentFrame, KeyFrame *pKF, const set
                 int nPredictedLevel = pMP->PredictScale(dist3D,&CurrentFrame);
 
                 // Search in a window
-                const float radius = th*CurrentFrame.mvScaleFactors[nPredictedLevel];
+                const float radius = th*CurrentFrame.mvScaleFactors[nPredictedLevel]; //param
 
                 const vector<size_t> vIndices2 = CurrentFrame.GetFeaturesInArea(u, v, radius, nPredictedLevel-1, nPredictedLevel+1);
 

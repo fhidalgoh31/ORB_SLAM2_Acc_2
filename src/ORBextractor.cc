@@ -70,9 +70,9 @@ using namespace std;
 namespace ORB_SLAM2
 {
 
-const int PATCH_SIZE = 31;
-const int HALF_PATCH_SIZE = 15;
-const int EDGE_THRESHOLD = 19;
+const int PATCH_SIZE = 31; //param
+const int HALF_PATCH_SIZE = 15; //param
+const int EDGE_THRESHOLD = 19; //param
 
 
 static float IC_Angle(const Mat& image, Point2f pt,  const vector<int> & u_max)
@@ -452,7 +452,7 @@ ORBextractor::ORBextractor(int _nfeatures, float _scaleFactor, int _nlevels,
 
     //This is for orientation
     // pre-compute the end of a row in a circular patch
-    umax.resize(HALF_PATCH_SIZE + 1);
+    umax.resize(HALF_PATCH_SIZE + 1); //param
 
     int v, v0, vmax = cvFloor(HALF_PATCH_SIZE * sqrt(2.f) / 2 + 1);
     int vmin = cvCeil(HALF_PATCH_SIZE * sqrt(2.f) / 2);
@@ -690,7 +690,7 @@ vector<cv::KeyPoint> ORBextractor::DistributeOctTree(const vector<cv::KeyPoint>&
         // when there are still lots of nodes to expand but not actually
         // that many more features need to be created handle it here
         // it just assumes that there will be about 3 features i every node to expand
-        else if(((int)lNodes.size()+nToExpand*3)>N)
+        else if(((int)lNodes.size()+nToExpand*3)>N) //param
         {
             // DLOG(INFO) << "Need to do extra steps";
             while(!bFinish)
@@ -787,14 +787,14 @@ void ORBextractor::ComputeKeyPointsOctTree(vector<vector<KeyPoint> >& allKeypoin
 {
     allKeypoints.resize(nlevels);
 
-    const float W = 30;
+    const float W = 30; //param
 
     for (int level = 0; level < nlevels; ++level)
     {
-        const int minBorderX = EDGE_THRESHOLD-3;
+        const int minBorderX = EDGE_THRESHOLD-3; //param
         const int minBorderY = minBorderX;
-        const int maxBorderX = mvImagePyramid[level].cols-EDGE_THRESHOLD+3;
-        const int maxBorderY = mvImagePyramid[level].rows-EDGE_THRESHOLD+3;
+        const int maxBorderX = mvImagePyramid[level].cols-EDGE_THRESHOLD+3; //param
+        const int maxBorderY = mvImagePyramid[level].rows-EDGE_THRESHOLD+3; //param
 
         vector<cv::KeyPoint> vToDistributeKeys;
         vToDistributeKeys.reserve(nfeatures*10);
@@ -810,10 +810,10 @@ void ORBextractor::ComputeKeyPointsOctTree(vector<vector<KeyPoint> >& allKeypoin
         for(int i=0; i<nRows; i++)
         {
             const float iniY =minBorderY+i*hCell;
-            float maxY = iniY+hCell+6;
+            float maxY = iniY+hCell+6; //param
             // float oldmaxY = maxY;
 
-            if(iniY>=maxBorderY-3)
+            if(iniY>=maxBorderY-3) //param
                 continue;
             if(maxY>maxBorderY)
                 maxY = maxBorderY;
@@ -821,10 +821,10 @@ void ORBextractor::ComputeKeyPointsOctTree(vector<vector<KeyPoint> >& allKeypoin
             for(int j=0; j<nCols; j++)
             {
                 const float iniX =minBorderX+j*wCell;
-                float maxX = iniX+wCell+6;
+                float maxX = iniX+wCell+6; //param
                 // DLOG(INFO) << "Supposed cell position y: " << iniY << "-" << oldmaxY;
                 // DLOG(INFO) << "Supposed cell position x: " << iniX << "-" << maxX;
-                if(iniX>=maxBorderX-6)
+                if(iniX>=maxBorderX-6) //param
                     continue;
                 if(maxX>maxBorderX)
                     maxX = maxBorderX;
@@ -891,7 +891,7 @@ void ORBextractor::ComputeKeyPointsOld(std::vector<std::vector<KeyPoint> > &allK
     {
         const int nDesiredFeatures = mnFeaturesPerLevel[level];
 
-        const int levelCols = sqrt((float)nDesiredFeatures/(5*imageRatio));
+        const int levelCols = sqrt((float)nDesiredFeatures/(5*imageRatio)); //param
         const int levelRows = imageRatio*levelCols;
 
         const int minBorderX = EDGE_THRESHOLD;
@@ -959,7 +959,7 @@ void ORBextractor::ComputeKeyPointsOld(std::vector<std::vector<KeyPoint> > &allK
 
                 Mat cellImage = mvImagePyramid[level].rowRange(iniY,iniY+hY).colRange(iniX,iniX+hX);
 
-                cellKeyPoints[i][j].reserve(nfeaturesCell*5);
+                cellKeyPoints[i][j].reserve(nfeaturesCell*5); //param
 
                 FAST(cellImage,cellKeyPoints[i][j],iniThFAST,true);
 

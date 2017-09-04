@@ -175,9 +175,9 @@ void LocalMapping::MapPointCulling()
 
     int nThObs;
     if(mbMonocular)
-        nThObs = 2;
+        nThObs = 2; //param
     else
-        nThObs = 3;
+        nThObs = 3; //param
     const int cnThObs = nThObs;
 
     while(lit!=mlpRecentAddedMapPoints.end())
@@ -187,17 +187,17 @@ void LocalMapping::MapPointCulling()
         {
             lit = mlpRecentAddedMapPoints.erase(lit);
         }
-        else if(pMP->GetFoundRatio()<0.25f )
+        else if(pMP->GetFoundRatio()<0.25f ) //param
         {
             pMP->SetBadFlag();
             lit = mlpRecentAddedMapPoints.erase(lit);
         }
-        else if(((int)nCurrentKFid-(int)pMP->mnFirstKFid)>=2 && pMP->Observations()<=cnThObs)
+        else if(((int)nCurrentKFid-(int)pMP->mnFirstKFid)>=2 && pMP->Observations()<=cnThObs) //param
         {
             pMP->SetBadFlag();
             lit = mlpRecentAddedMapPoints.erase(lit);
         }
-        else if(((int)nCurrentKFid-(int)pMP->mnFirstKFid)>=3)
+        else if(((int)nCurrentKFid-(int)pMP->mnFirstKFid)>=3) //param
             lit = mlpRecentAddedMapPoints.erase(lit);
         else
             lit++;
@@ -207,12 +207,12 @@ void LocalMapping::MapPointCulling()
 void LocalMapping::CreateNewMapPoints()
 {
     // Retrieve neighbor keyframes in covisibility graph
-    int nn = 10;
+    int nn = 10; //param
     if(mbMonocular)
-        nn=20;
+        nn=20; //param
     const vector<KeyFrame*> vpNeighKFs = mpCurrentKeyFrame->GetBestCovisibilityKeyFrames(nn);
 
-    ORBmatcher matcher(0.6,false);
+    ORBmatcher matcher(0.6,false); //param
 
     cv::Mat Rcw1 = mpCurrentKeyFrame->GetRotation();
     cv::Mat Rwc1 = Rcw1.t();
@@ -229,7 +229,7 @@ void LocalMapping::CreateNewMapPoints()
     const float &invfx1 = mpCurrentKeyFrame->invfx;
     const float &invfy1 = mpCurrentKeyFrame->invfy;
 
-    const float ratioFactor = 1.5f*mpCurrentKeyFrame->mfScaleFactor;
+    const float ratioFactor = 1.5f*mpCurrentKeyFrame->mfScaleFactor; //param
 
     int nnew=0;
 
@@ -256,7 +256,7 @@ void LocalMapping::CreateNewMapPoints()
             const float medianDepthKF2 = pKF2->ComputeSceneMedianDepth(2);
             const float ratioBaselineDepth = baseline/medianDepthKF2;
 
-            if(ratioBaselineDepth<0.01)
+            if(ratioBaselineDepth<0.01) //param
                 continue;
         }
 
@@ -316,7 +316,7 @@ void LocalMapping::CreateNewMapPoints()
             cosParallaxStereo = min(cosParallaxStereo1,cosParallaxStereo2);
 
             cv::Mat x3D;
-            if(cosParallaxRays<cosParallaxStereo && cosParallaxRays>0 && (bStereo1 || bStereo2 || cosParallaxRays<0.9998))
+            if(cosParallaxRays<cosParallaxStereo && cosParallaxRays>0 && (bStereo1 || bStereo2 || cosParallaxRays<0.9998)) //param
             {
                 // Linear Triangulation Method
                 cv::Mat A(4,4,CV_32F);
@@ -454,9 +454,9 @@ void LocalMapping::CreateNewMapPoints()
 void LocalMapping::SearchInNeighbors()
 {
     // Retrieve neighbor keyframes
-    int nn = 10;
+    int nn = 10; //param
     if(mbMonocular)
-        nn=20;
+        nn=20; //param
     const vector<KeyFrame*> vpNeighKFs = mpCurrentKeyFrame->GetBestCovisibilityKeyFrames(nn);
     vector<KeyFrame*> vpTargetKFs;
     for(vector<KeyFrame*>::const_iterator vit=vpNeighKFs.begin(), vend=vpNeighKFs.end(); vit!=vend; vit++)
@@ -486,7 +486,7 @@ void LocalMapping::SearchInNeighbors()
     {
         KeyFrame* pKFi = *vit;
 
-        matcher.Fuse(pKFi,vpMapPointMatches);
+        matcher.Fuse(pKFi,vpMapPointMatches); //param
     }
 
     // Search matches by projection from target KFs in current KF
@@ -511,7 +511,7 @@ void LocalMapping::SearchInNeighbors()
         }
     }
 
-    matcher.Fuse(mpCurrentKeyFrame,vpFuseCandidates);
+    matcher.Fuse(mpCurrentKeyFrame,vpFuseCandidates); //param
 
 
     // Update points
@@ -637,6 +637,8 @@ void LocalMapping::KeyFrameCulling()
     // We only consider close stereo points
     vector<KeyFrame*> vpLocalKeyFrames = mpCurrentKeyFrame->GetVectorCovisibleKeyFrames();
 
+    //TODO : throws out the first keyframe it find that falls into the criteria, doesn't consider whether
+    // it might make more sense to get rid of other keyframes first, that e.g. are further away from the current keyframe
     for(vector<KeyFrame*>::iterator vit=vpLocalKeyFrames.begin(), vend=vpLocalKeyFrames.end(); vit!=vend; vit++)
     {
         KeyFrame* pKF = *vit;
@@ -645,7 +647,7 @@ void LocalMapping::KeyFrameCulling()
         const vector<MapPoint*> vpMapPoints = pKF->GetMapPointMatches();
 
         int nObs = 3;
-        const int thObs=nObs;
+        const int thObs=nObs; //param
         int nRedundantObservations=0;
         int nMPs=0;
         for(size_t i=0, iend=vpMapPoints.size(); i<iend; i++)
@@ -662,11 +664,13 @@ void LocalMapping::KeyFrameCulling()
                     }
 
                     nMPs++;
-                    if(pMP->Observations()>thObs)
+                    // check if the mappoint is seen at least three times
+                    if(pMP->Observations()>thObs) //param
                     {
                         const int &scaleLevel = pKF->mvKeysUn[i].octave;
                         const map<KeyFrame*, size_t> observations = pMP->GetObservations();
                         int nObs=0;
+                        // go through the keyframes that see the map point
                         for(map<KeyFrame*, size_t>::const_iterator mit=observations.begin(), mend=observations.end(); mit!=mend; mit++)
                         {
                             KeyFrame* pKFi = mit->first;
@@ -677,11 +681,11 @@ void LocalMapping::KeyFrameCulling()
                             if(scaleLeveli<=scaleLevel+1)
                             {
                                 nObs++;
-                                if(nObs>=thObs)
+                                if(nObs>=thObs) //param
                                     break;
                             }
                         }
-                        if(nObs>=thObs)
+                        if(nObs>=thObs) //param
                         {
                             nRedundantObservations++;
                         }
@@ -690,7 +694,7 @@ void LocalMapping::KeyFrameCulling()
             }
         }
 
-        if(nRedundantObservations>0.9*nMPs)
+        if(nRedundantObservations>0.9*nMPs) //param
             pKF->SetBadFlag();
     }
 }

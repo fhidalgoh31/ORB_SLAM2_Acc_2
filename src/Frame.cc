@@ -476,7 +476,7 @@ void Frame::ComputeStereoMatches()
     mvuRight = vector<float>(N,-1.0f);
     mvDepth = vector<float>(N,-1.0f);
 
-    const int thOrbDist = (ORBmatcher::TH_HIGH+ORBmatcher::TH_LOW)/2;
+    const int thOrbDist = (ORBmatcher::TH_HIGH+ORBmatcher::TH_LOW)/2; //param
 
     const int nRows = mpORBextractorLeft->mvImagePyramid[0].rows;
 
@@ -527,7 +527,7 @@ void Frame::ComputeStereoMatches()
         if(maxU<0)
             continue;
 
-        int bestDist = ORBmatcher::TH_HIGH;
+        int bestDist = ORBmatcher::TH_HIGH; //param
         size_t bestIdxR = 0;
 
         const cv::Mat &dL = mDescriptors.row(iL);
@@ -567,14 +567,14 @@ void Frame::ComputeStereoMatches()
             const float scaleduR0 = round(uR0*scaleFactor);
 
             // sliding window search
-            const int w = 5;
+            const int w = 5; //param
             cv::Mat IL = mpORBextractorLeft->mvImagePyramid[kpL.octave].rowRange(scaledvL-w,scaledvL+w+1).colRange(scaleduL-w,scaleduL+w+1);
             IL.convertTo(IL,CV_32F);
             IL = IL - IL.at<float>(w,w) *cv::Mat::ones(IL.rows,IL.cols,CV_32F);
 
             int bestDist = INT_MAX;
             int bestincR = 0;
-            const int L = 5;
+            const int L = 5; //param
             vector<float> vDists;
             vDists.resize(2*L+1);
 
@@ -633,7 +633,7 @@ void Frame::ComputeStereoMatches()
 
     sort(vDistIdx.begin(),vDistIdx.end());
     const float median = vDistIdx[vDistIdx.size()/2].first;
-    const float thDist = 1.5f*1.4f*median;
+    const float thDist = 1.5f*1.4f*median; //param
 
     for(int i=vDistIdx.size()-1;i>=0;i--)
     {

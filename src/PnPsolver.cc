@@ -153,7 +153,7 @@ void PnPsolver::SetRansacParameters(double probability, int minInliers, int maxI
 
     mvMaxError.resize(mvSigma2.size());
     for(size_t i=0; i<mvSigma2.size(); i++)
-        mvMaxError[i] = mvSigma2[i]*th2;
+        mvMaxError[i] = mvSigma2[i]*th2; //param
 }
 
 cv::Mat PnPsolver::find(vector<bool> &vbInliers, int &nInliers)

@@ -36,6 +36,7 @@ class ParameterBase {
 };
 
 
+//TODO : add comments!
 template <typename T>
 class Parameter : public ParameterBase {
  public:
@@ -65,7 +66,7 @@ class Parameter : public ParameterBase {
   virtual ~Parameter(){};
 
   const T& getValue() const { return mValue; };
-  const bool checkAndResetIfChanged() 
+  const bool checkAndResetIfChanged()
   {
     if(mChanged)
     {

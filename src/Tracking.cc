@@ -58,12 +58,6 @@ Tracking::Tracking(System *pSys, ORBVocabulary* pVoc, FrameDrawer *pFrameDrawer,
 {
     // Load camera parameters from settings file
 
-    // nFeatures = Parameter<int>("Num features", mfSettings["ORBextractor.nFeatures"], 0, 5000);
-    // fScaleFactor = Parameter<float>("Scale factor", mfSettings["ORBextractor.scaleFactor"], 1, 2);
-    // nLevels = Parameter<int>("Num levels", mfSettings["ORBextractor.nLevels"], 1, 2);
-    // fIniThFAST = Parameter<int>("IniThFAST", mfSettings["ORBextractor.iniThFAST"], 0, 50);
-    // fMinThFAST = Parameter<int>("MinThFAST", mfSettings["ORBextractor.minThFAST"], 0, 100);
-
     float fx = mfSettings["Camera.fx"];
     float fy = mfSettings["Camera.fy"];
     float cx = mfSettings["Camera.cx"];
@@ -136,7 +130,7 @@ Tracking::Tracking(System *pSys, ORBVocabulary* pVoc, FrameDrawer *pFrameDrawer,
         mpORBextractorRight = new ORBextractor(nFeatures(),fScaleFactor(),nLevels(),fIniThFAST(),fMinThFAST());
 
     if(sensor==System::MONOCULAR)
-        mpIniORBextractor = new ORBextractor(2*nFeatures(),fScaleFactor(),nLevels(),fIniThFAST(),fMinThFAST());
+        mpIniORBextractor = new ORBextractor(2*nFeatures(),fScaleFactor(),nLevels(),fIniThFAST(),fMinThFAST()); //param
 
     cout << endl  << "ORB Extractor Parameters: " << endl;
     cout << "- Number of Features: " << nFeatures() << endl;
@@ -542,7 +536,7 @@ void Tracking::Track()
 
 void Tracking::StereoInitialization()
 {
-    if(mCurrentFrame.N>500)
+    if(mCurrentFrame.N>500) //param
     {
         // Set Frame pose to the origin
         mCurrentFrame.SetPose(cv::Mat::eye(4,4,CV_32F));
@@ -600,7 +594,7 @@ void Tracking::MonocularInitialization()
     if(!mpInitializer)
     {
         // Set Reference Frame
-        if(mCurrentFrame.mvKeys.size()>100)
+        if(mCurrentFrame.mvKeys.size()>100) //param
         {
             mInitialFrame = Frame(mCurrentFrame);
             mLastFrame = Frame(mCurrentFrame);
@@ -611,7 +605,7 @@ void Tracking::MonocularInitialization()
             if(mpInitializer)
                 delete mpInitializer;
 
-            mpInitializer =  new Initializer(mCurrentFrame,1.0,200);
+            mpInitializer =  new Initializer(mCurrentFrame,1.0,200); //param
 
             fill(mvIniMatches.begin(),mvIniMatches.end(),-1);
 
@@ -621,7 +615,7 @@ void Tracking::MonocularInitialization()
     else
     {
         // Try to initialize
-        if((int)mCurrentFrame.mvKeys.size()<=100)
+        if((int)mCurrentFrame.mvKeys.size()<=100) //param
         {
             delete mpInitializer;
             mpInitializer = static_cast<Initializer*>(NULL);
@@ -634,13 +628,13 @@ void Tracking::MonocularInitialization()
         // on first call the mvbprevmatched points are simply all keys in the frame before
         //TODO : the windowsize (100) should really be dependant on the image size, 100 might
         //not be enough for a large image and too much for smaller image
-        int nmatches = matcher.SearchForInitialization(mInitialFrame,mCurrentFrame,mvbPrevMatched,mvIniMatches,100);
+        int nmatches = matcher.SearchForInitialization(mInitialFrame,mCurrentFrame,mvbPrevMatched,mvIniMatches,100); //param
 
         //TODO : matcher could poissbly signal that there is barely any distance between matched points
         // and initialization doesn't need to run, would save computation power while not moving
 
         // Check if there are enough correspondences
-        if(nmatches<100)
+        if(nmatches<100) //param
         {
             delete mpInitializer;
             mpInitializer = static_cast<Initializer*>(NULL);
@@ -723,13 +717,13 @@ void Tracking::CreateInitialMapMonocular()
     // Bundle Adjustment
     cout << "New Map created with " << mpMap->MapPointsInMap() << " points" << endl;
 
-    Optimizer::GlobalBundleAdjustemnt(mpMap,20);
+    Optimizer::GlobalBundleAdjustemnt(mpMap,20); //param
 
     // Set median depth to 1
     float medianDepth = pKFini->ComputeSceneMedianDepth(2);
     float invMedianDepth = 1.0f/medianDepth;
 
-    if(medianDepth<0 || pKFcur->TrackedMapPoints(1)<100)
+    if(medianDepth<0 || pKFcur->TrackedMapPoints(1)<100) //param
     {
         cout << "Wrong initialization, reseting..." << endl;
         Reset();
@@ -899,7 +893,7 @@ void Tracking::UpdateLastFrame()
             nPoints++;
         }
 
-        if(vDepthIdx[j].first>mThDepth && nPoints>100)
+        if(vDepthIdx[j].first>mThDepth && nPoints>100) //param
             break;
     }
 }
@@ -928,7 +922,7 @@ bool Tracking::TrackWithMotionModel()
     if(nmatches<20) //param
     {
         fill(mCurrentFrame.mvpMapPoints.begin(),mCurrentFrame.mvpMapPoints.end(),static_cast<MapPoint*>(NULL));
-        nmatches = matcher.SearchByProjection(mCurrentFrame,mLastFrame,2*th,mSensor==System::MONOCULAR);
+        nmatches = matcher.SearchByProjection(mCurrentFrame,mLastFrame,2*th,mSensor==System::MONOCULAR); //param
     }
 
     if(nmatches<mnMinMatchesForTracking.getValue()) //param
@@ -1055,24 +1049,24 @@ bool Tracking::NeedNewKeyFrame()
         }
     }
 
-    bool bNeedToInsertClose = (nTrackedClose<100) && (nNonTrackedClose>70);
+    bool bNeedToInsertClose = (nTrackedClose<100) && (nNonTrackedClose>70); //param
 
     // Thresholds
-    float thRefRatio = 0.75f;
+    float thRefRatio = 0.75f; //param
     if(nKFs<2)
-        thRefRatio = 0.4f;
+        thRefRatio = 0.4f; //param
 
     if(mSensor==System::MONOCULAR)
-        thRefRatio = 0.9f;
+        thRefRatio = 0.9f; //param
 
     // Condition 1a: More than "MaxFrames" have passed from last keyframe insertion
     const bool c1a = mCurrentFrame.mnId>=mnLastKeyFrameId+mMaxFrames;
     // Condition 1b: More than "MinFrames" have passed and Local Mapping is idle
     const bool c1b = (mCurrentFrame.mnId>=mnLastKeyFrameId+mMinFrames && bLocalMappingIdle);
     //Condition 1c: tracking is weak
-    const bool c1c =  mSensor!=System::MONOCULAR && (mnMatchesInliers<nRefMatches*0.25 || bNeedToInsertClose) ;
+    const bool c1c =  mSensor!=System::MONOCULAR && (mnMatchesInliers<nRefMatches*0.25 || bNeedToInsertClose) ; //param
     // Condition 2: Few tracked points compared to reference keyframe. Lots of visual odometry compared to map matches.
-    const bool c2 = ((mnMatchesInliers<nRefMatches*thRefRatio|| bNeedToInsertClose) && mnMatchesInliers>15);
+    const bool c2 = ((mnMatchesInliers<nRefMatches*thRefRatio|| bNeedToInsertClose) && mnMatchesInliers>15); //param
 
     if((c1a||c1b||c1c)&&c2)
     {
@@ -1166,7 +1160,7 @@ void Tracking::CreateNewKeyFrame()
                     nPoints++;
                 }
 
-                if(vDepthIdx[j].first>mThDepth && nPoints>100)
+                if(vDepthIdx[j].first>mThDepth && nPoints>100) //param
                     break;
             }
         }
@@ -1322,12 +1316,12 @@ void Tracking::UpdateLocalKeyFrames()
     for(vector<KeyFrame*>::const_iterator itKF=mvpLocalKeyFrames.begin(), itEndKF=mvpLocalKeyFrames.end(); itKF!=itEndKF; itKF++)
     {
         // Limit the number of keyframes
-        if(mvpLocalKeyFrames.size()>80)
+        if(mvpLocalKeyFrames.size()>80) //param
             break;
 
         KeyFrame* pKF = *itKF;
 
-        const vector<KeyFrame*> vNeighs = pKF->GetBestCovisibilityKeyFrames(10);
+        const vector<KeyFrame*> vNeighs = pKF->GetBestCovisibilityKeyFrames(10); //param
 
         for(vector<KeyFrame*>::const_iterator itNeighKF=vNeighs.begin(), itEndNeighKF=vNeighs.end(); itNeighKF!=itEndNeighKF; itNeighKF++)
         {
@@ -1388,6 +1382,7 @@ bool Tracking::Relocalization()
     vector<KeyFrame*> vpCandidateKFs = mpKeyFrameDB->DetectRelocalizationCandidates(&mCurrentFrame);
 
     if(vpCandidateKFs.empty())
+        DLOG(INFO) << "Relocalization impossible, database returned no candidates.";
         return false;
 
     const int nKFs = vpCandidateKFs.size();
@@ -1410,6 +1405,9 @@ bool Tracking::Relocalization()
     //TODO : if last velocities were known this could check keyframes in an area
     //that increases with time relative to the last known velocity
     //might avoid relocalizations somwhere completely different and reduce search cost
+    //heading info from imu would also help to exclude keyframes
+
+    //search matches between the candidate keyframes' mappoints and current frames keypoints
     for(int i=0; i<nKFs; i++)
     {
         KeyFrame* pKF = vpCandidateKFs[i];
@@ -1418,6 +1416,7 @@ bool Tracking::Relocalization()
         else
         {
             int nmatches = matcher.SearchByBoW(pKF,mCurrentFrame,vvpMapPointMatches[i]);
+            // if less than 15 keypoints are matched consider the frame to be a mismatch
             if(nmatches<15) //param
             {
                 vbDiscarded[i] = true;
@@ -1451,7 +1450,7 @@ bool Tracking::Relocalization()
             bool bNoMore;
 
             PnPsolver* pSolver = vpPnPsolvers[i];
-            cv::Mat Tcw = pSolver->iterate(5,bNoMore,vbInliers,nInliers);
+            cv::Mat Tcw = pSolver->iterate(5,bNoMore,vbInliers,nInliers); //param
 
             // If Ransac reachs max. iterations discard keyframe
             if(bNoMore)
@@ -1482,7 +1481,7 @@ bool Tracking::Relocalization()
 
                 int nGood = Optimizer::PoseOptimization(&mCurrentFrame);
 
-                if(nGood<10)
+                if(nGood<10) //param
                     continue;
 
                 for(int io =0; io<mCurrentFrame.N; io++)
@@ -1490,11 +1489,11 @@ bool Tracking::Relocalization()
                         mCurrentFrame.mvpMapPoints[io]=static_cast<MapPoint*>(NULL);
 
                 // If few inliers, search by projection in a coarse window and optimize again
-                if(nGood<50)
+                if(nGood<50) //param
                 {
                     int nadditional =matcher2.SearchByProjection(mCurrentFrame,vpCandidateKFs[i],sFound,10,100); //param
 
-                    if(nadditional+nGood>=50) //param
+                        if(nadditional+nGood>=50) //param
                     {
                         nGood = Optimizer::PoseOptimization(&mCurrentFrame);
 
@@ -1506,7 +1505,7 @@ bool Tracking::Relocalization()
                             for(int ip =0; ip<mCurrentFrame.N; ip++)
                                 if(mCurrentFrame.mvpMapPoints[ip])
                                     sFound.insert(mCurrentFrame.mvpMapPoints[ip]);
-                            nadditional =matcher2.SearchByProjection(mCurrentFrame,vpCandidateKFs[i],sFound,3,64);
+                            nadditional =matcher2.SearchByProjection(mCurrentFrame,vpCandidateKFs[i],sFound,3,64); //param
 
                             // Final optimization
                             if(nGood+nadditional>=50) //param
@@ -1522,6 +1521,7 @@ bool Tracking::Relocalization()
                 }
 
 
+                DLOG(INFO) << "Found " << nGood << " inliers.";
                 // If the pose is supported by enough inliers stop ransacs and continue
                 if(nGood>=50) //param
                 {
@@ -1534,10 +1534,12 @@ bool Tracking::Relocalization()
 
     if(!bMatch)
     {
+        DLOG(INFO) << "Relocalization impossible, not enough inlier map points found.";
         return false;
     }
     else
     {
+        DLOG(INFO) << "Relocalization successful";
         mnLastRelocFrameId = mCurrentFrame.mnId;
         return true;
     }
