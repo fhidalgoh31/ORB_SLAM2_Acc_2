@@ -143,47 +143,19 @@ class ParameterManager : public ParameterBase {
 
       if (type == 0) // bool
       {
-        auto& pango_var =  boost::get<pangolin::Var<bool>* >(pango_var_variant);
-        auto& value = boost::get<bool>(param->getVariant());
-        if(pango_var->Get() != value)
-        {
-          param->setValue(pango_var->Get());
-          static_cast<Parameter<bool>* >(param)->mChanged = true;
-          DLOG(INFO) << "Parameter value of " << param->getName() <<" is: " << boost::get<bool>(param->getVariant());
-        }
+          updateValue<bool>(param, pango_var_variant);
       }
       else if (type == 1) // int
       {
-        auto& pango_var =  boost::get<pangolin::Var<int>* >(pango_var_variant);
-        auto& value = boost::get<int>(param->getVariant());
-        if(pango_var->Get() != value)
-        {
-          param->setValue(pango_var->Get());
-          static_cast<Parameter<int>* >(param)->mChanged = true;
-          DLOG(INFO) << "Parameter value of " << param->getName() <<" is: " << boost::get<int>(param->getVariant());
-        }
+          updateValue<int>(param, pango_var_variant);
       }
       else if (type == 2) // float
       {
-        auto& pango_var =  boost::get<pangolin::Var<float>* >(pango_var_variant);
-        auto& value = boost::get<float>(param->getVariant());
-        if(pango_var->Get() != value)
-        {
-          param->setValue(pango_var->Get());
-          static_cast<Parameter<float>* >(param)->mChanged = true;
-          DLOG(INFO) << "Parameter value of " << param->getName() <<" is: " << boost::get<float>(param->getVariant());
-        }
+          updateValue<float>(param, pango_var_variant);
       }
       else if (type == 3) // double
       {
-        auto& pango_var =  boost::get<pangolin::Var<double>* >(pango_var_variant);
-        auto& value = boost::get<double>(param->getVariant());
-        if(pango_var->Get() != value)
-        {
-          param->setValue(pango_var->Get());
-          static_cast<Parameter<double>* >(param)->mChanged = true;
-          DLOG(INFO) << "Parameter value of " << param->getName() <<" is: " << boost::get<double>(param->getVariant());
-        }
+          updateValue<double>(param, pango_var_variant);
       }
     }
   }
@@ -206,6 +178,18 @@ class ParameterManager : public ParameterBase {
     }
   }
 
+  template<typename T>
+  static void updateValue(ParameterBase* param, PangolinVariants& pango_var_variant)
+  {
+    auto& pango_var =  boost::get<pangolin::Var<T>* >(pango_var_variant);
+    auto& value = boost::get<T>(param->getVariant());
+    if(pango_var->Get() != value)
+    {
+      param->setValue(pango_var->Get());
+      static_cast<Parameter<T>* >(param)->mChanged = true;
+      DLOG(INFO) << "Parameter value of " << param->getName() <<" is: " << boost::get<T>(param->getVariant());
+    }
+  }
   static ParameterPairMap pangolinParams;
 };
 }
