@@ -10,7 +10,7 @@
 namespace ORB_SLAM2 {
 
 // For new types of parameters add type here, a setValue below and all the stuff in ParameterManager
-typedef boost::variant<bool, int, float, double> ParameterTypes;
+typedef boost::variant<bool, int, float, double> ParameterVariant;
 
 class ParameterBase {
  protected:
@@ -24,13 +24,13 @@ class ParameterBase {
 
  public:
   virtual ~ParameterBase(){};
-  virtual const ParameterTypes getVariant() const { return 0.0; };
+  virtual const ParameterVariant getVariant() const { return 0.0; };
   virtual void setValue(const bool& value){} ;
   virtual void setValue(const int& value){} ;
   virtual void setValue(const float& value){} ;
   virtual void setValue(const double& value){} ;
-  virtual const ParameterTypes getMinValue() const { return 0.0; };
-  virtual const ParameterTypes getMaxValue() const { return 0.0; };
+  virtual const ParameterVariant getMinValue() const { return 0.0; };
+  virtual const ParameterVariant getMaxValue() const { return 0.0; };
   virtual const ParameterCategory getCategory() const { return ParameterCategory::UNDEFINED; };
   virtual const std::string getName() const { return "undefined"; };
 };
@@ -85,17 +85,17 @@ class Parameter : public ParameterBase {
   }
 
   const ParameterCategory mCategory;
-  T mMinValue;
-  T mMaxValue;
+  const T mMinValue;
+  const T mMaxValue;
 
  protected:
   friend class ParameterManager;
 
-  virtual const ParameterTypes getMinValue() const override { return mMinValue; };
-  virtual const ParameterTypes getMaxValue() const override { return mMaxValue; };
+  virtual const ParameterVariant getMinValue() const override { return mMinValue; };
+  virtual const ParameterVariant getMaxValue() const override { return mMaxValue; };
   virtual const ParameterCategory getCategory() const override { return mCategory; };
   virtual const std::string getName() const override { return mName; };
-  virtual const ParameterTypes getVariant() const override { return mValue; }; // cannot return a const ref because implicitly casted
+  virtual const ParameterVariant getVariant() const override { return mValue; }; // cannot return a const ref because implicitly casted
   virtual void setValue(const T& value) override { mValue = value; };
 
   T mValue;
