@@ -78,13 +78,13 @@ void Viewer::Run()
     // paramter view shows sliders for numerical parameters
     // //TODO : group them by module e.g. parameters.initialization
     auto& parameterPanel = pangolin::CreatePanel("parameters").SetBounds(0.0,1.0,0.0,pangolin::Attach::Pix(175));
-    auto parameter_entries = ParameterManager::createPangolinEntries("parameters");
+    auto parameter_entries = ParameterManager::createPangolinEntries("parameters", ParameterGroup::GENERAL);
     parameterPanel.ToggleShow();
 
     // visual parameters are activated via Ctrl+V, these allow to switch on/off which
     // modules are visualized
     auto& visualParameterPanel = pangolin::CreatePanel("visual_parameters").SetBounds(0.0,1.0,0.0,pangolin::Attach::Pix(175));
-    // auto visual_entries = ParameterManager::createPangolinEntries("visual_parameters");
+    auto visual_entries = ParameterManager::createPangolinEntries("visual_parameters", ParameterGroup::VISUAL);
     visualParameterPanel.ToggleShow();
 
     // open parameter pane when pressing Ctrl+p

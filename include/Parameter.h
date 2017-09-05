@@ -13,6 +13,17 @@ namespace ORB_SLAM2 {
 // For new types of parameters add type here, a setValue below and all the stuff in ParameterManager
 typedef boost::variant<bool, int, float, double> ParameterVariant;
 
+enum class ParameterGroup
+{
+    GENERAL,
+    VISUAL,
+    ORBEXTRACTOR,
+    TRACKING,
+    INITIALIZATION,
+    UNDEFINED
+    //TODO : add more groups
+};
+
 class ParameterBase
 {
 protected:
@@ -37,6 +48,7 @@ public:
     virtual const ParameterVariant getMaxValue() const { return 0.0; };
     virtual const ParameterCategory getCategory() const { return ParameterCategory::UNDEFINED; };
     virtual const std::string getName() const { return "undefined"; };
+    virtual const ParameterGroup getGroup() const { return ParameterGroup::UNDEFINED; };
 };
 
 
@@ -49,7 +61,8 @@ public:
     Parameter(){};
 
     // if toggle is set to false this will create a button, otherwise a switch
-    Parameter(const std::string& name, const bool& value, const bool& toggle, const std::string& group = "parameters")
+    Parameter(const std::string& name, const bool& value, const bool& toggle,
+              const ParameterGroup& group = ParameterGroup::GENERAL)
         : mCategory(ParameterCategory::BOOL)
         , mMinValue(0)
         , mMaxValue(toggle)
@@ -60,7 +73,8 @@ public:
         parameters.push_back(this);
     }
 
-    Parameter(const std::string& name, const T& value, const T& minValue, const T& maxValue, const std::string group="parameters")
+    Parameter(const std::string& name, const T& value, const T& minValue,
+              const T& maxValue, const ParameterGroup& group = ParameterGroup::GENERAL)
         : mCategory(ParameterCategory::MINMAX)
         , mMinValue(minValue)
         , mMaxValue(maxValue)
@@ -71,7 +85,7 @@ public:
         parameters.push_back(this);
     }
 
-    Parameter(const std::string& name, const T& value, const std::string& group = "parameters")
+    Parameter(const std::string& name, const T& value, const ParameterGroup& group = ParameterGroup::GENERAL)
         : mCategory(ParameterCategory::TEXTINPUT)
         , mMinValue(0)
         , mMaxValue(0)
@@ -114,12 +128,13 @@ protected:
     virtual const ParameterVariant getMaxValue() const override { return mMaxValue; };
     virtual const ParameterCategory getCategory() const override { return mCategory; };
     virtual const std::string getName() const override { return mName; };
+    virtual const ParameterGroup getGroup() const override { return mGroup; };
     virtual const ParameterVariant getVariant() const override { return mValue; }; // cannot return a const ref because implicitly casted
     virtual void setValue(const T& value) override { mValue = value; };
 
     T mValue;
     std::string mName;
-    std::string mGroup;
+    ParameterGroup mGroup;
     bool mChanged;
 };
 
@@ -131,23 +146,27 @@ public:
     typedef boost::variant<pangolin::Var<bool>*, pangolin::Var<int>*, pangolin::Var<float>*, pangolin::Var<double>*, pangolin::Var<std::string>* > PangolinVariants;
     typedef std::map<std::string, std::pair<ParameterBase*, PangolinVariants>> ParameterPairMap;
 
-    static ParameterPairMap& createPangolinEntries(const std::string& panel_name)
+    static ParameterPairMap& createPangolinEntries(const std::string& panel_name, ParameterGroup target_group)
     {
         for(const auto& param : parameters)
         {
-            switch (param->getVariant().which()) {
-                case 0: // bool
-                    createPangolinEntry<bool>(param, panel_name);
-                    break;
-                case 1: // int
-                    createPangolinEntry<int>(param, panel_name);
-                    break;
-                case 2: // float
-                    createPangolinEntry<float>(param, panel_name);
-                    break;
-                case 3: // double
-                    createPangolinEntry<double>(param, panel_name);
-                    break;
+            if(param->getGroup() == target_group)
+            {
+                switch (param->getVariant().which())
+                {
+                    case 0: // bool
+                        createPangolinEntry<bool>(param, panel_name);
+                        break;
+                    case 1: // int
+                        createPangolinEntry<int>(param, panel_name);
+                        break;
+                    case 2: // float
+                        createPangolinEntry<float>(param, panel_name);
+                        break;
+                    case 3: // double
+                        createPangolinEntry<double>(param, panel_name);
+                        break;
+                }
             }
         }
         return pangolinParams;
