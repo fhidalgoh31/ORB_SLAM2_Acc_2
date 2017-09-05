@@ -26,9 +26,8 @@
 #include "MapDrawer.h"
 #include "Tracking.h"
 #include "System.h"
-#include <stdio.h>
-#include "Parameter.h"
 
+#include <stdio.h>
 #include <mutex>
 
 namespace ORB_SLAM2
@@ -82,12 +81,8 @@ private:
     bool mbStopped;
     bool mbStopRequested;
     std::mutex mMutexStop;
-
 };
 
 }
 
-
 #endif // VIEWER_H
-	
-
