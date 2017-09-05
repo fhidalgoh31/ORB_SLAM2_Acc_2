@@ -75,10 +75,69 @@ void Viewer::Run()
     pangolin::Var<bool> menuLocalizationMode("menu.Localization Mode",false,true);
     pangolin::Var<bool> menuReset("menu.Reset",false,false);
 
-    // paramter view shows sliders for numerical parameters
+    // create the panels for the sub parameters
+    std::map<std::string, pangolin::View*> subPanels;
+    auto& extractorPanel = pangolin::CreatePanel("extractor").SetBounds(0.0,1.0,pangolin::Attach::Pix(200),1.0);
+    auto extractorEntries = ParameterManager::createPangolinEntries("extractor", ParameterGroup::ORBEXTRACTOR);
+    subPanels["extractor"] = (&extractorPanel);
+    extractorPanel.ToggleShow();
+
+    auto& initializePanel = pangolin::CreatePanel("initialize").SetBounds(0.0,1.0,pangolin::Attach::Pix(200),1.0);
+    auto initializeEntries = ParameterManager::createPangolinEntries("initialize", ParameterGroup::INITIALIZATION);
+    subPanels["initialize"] = (&initializePanel);
+    initializePanel.ToggleShow();
+
+    auto& trackingPanel = pangolin::CreatePanel("tracking").SetBounds(0.0,1.0,pangolin::Attach::Pix(200),1.0);
+    auto trackingEntries = ParameterManager::createPangolinEntries("tracking", ParameterGroup::TRACKING);
+    subPanels["tracking"] = &trackingPanel;
+    trackingPanel.ToggleShow();
+
+    auto& relocalizationPanel = pangolin::CreatePanel("relocalization").SetBounds(0.0,1.0,pangolin::Attach::Pix(200),1.0);
+    auto relocalizationEntries = ParameterManager::createPangolinEntries("relocalization", ParameterGroup::RELOCALIZATION);
+    subPanels["relocalization"] = &relocalizationPanel;
+    relocalizationPanel.ToggleShow();
+
+    auto& localMappingPanel = pangolin::CreatePanel("localMapping").SetBounds(0.0,1.0,pangolin::Attach::Pix(200),1.0);
+    auto localMappingEntries = ParameterManager::createPangolinEntries("localMapping", ParameterGroup::LOCAL_MAPPING);
+    subPanels["localMapping"] = &localMappingPanel;
+    localMappingPanel.ToggleShow();
+
+    auto& loopClosingPanel = pangolin::CreatePanel("loopClosing").SetBounds(0.0,1.0,pangolin::Attach::Pix(200),1.0);
+    auto loopClosingEntries = ParameterManager::createPangolinEntries("loopClosing", ParameterGroup::LOOP_CLOSING);
+    subPanels["loopClosing"] = &loopClosingPanel;
+    loopClosingPanel.ToggleShow();
+
+    //TODO : try passing the panel name as a template parameter
+    auto toggleSubPanel = [&](const std::string& panelName){
+        for(std::map<std::string,pangolin::View*>::iterator it = subPanels.begin(); it != subPanels.end(); it++)
+        {
+            if(it->first == panelName)
+            {
+                if(!it->second->IsShown())
+                {
+                    it->second->ToggleShow();
+                }
+            }
+            else
+            {
+                if(it->second->IsShown())
+                {
+                    it->second->ToggleShow();
+                }
+            }
+        }
+    };
+
+    // parameter view shows buttons which open parameters for every subcategory
     // //TODO : group them by module e.g. parameters.initialization
     auto& parameterPanel = pangolin::CreatePanel("parameters").SetBounds(0.0,1.0,0.0,pangolin::Attach::Pix(175));
-    auto parameter_entries = ParameterManager::createPangolinEntries("parameters", ParameterGroup::GENERAL);
+    pangolin::Var<std::function<void(const std::string&)>> extractorButton("parameters.Extractor params", toggleSubPanel);
+    pangolin::Var<bool> initializationButton("parameters.Initialization params",false,false);
+    pangolin::Var<bool> trackingButton("parameters.Tracking params",false,false);
+    pangolin::Var<bool> relocalizationButton("parameters.Relocalization params",false,false);
+    pangolin::Var<bool> localMappingButton("parameters.Local mapping params",false,false);
+    pangolin::Var<bool> loopClosingButton("parameters.Loop closing params",false,false);
+    auto parameterEntries = ParameterManager::createPangolinEntries("parameters", ParameterGroup::GENERAL);
     parameterPanel.ToggleShow();
 
     // visual parameters are activated via Ctrl+V, these allow to switch on/off which
