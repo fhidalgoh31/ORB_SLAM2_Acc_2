@@ -69,6 +69,8 @@ int main(int argc, char **argv)
     cout << "Images in the sequence: " << nImages << endl << endl;
 
     // Main loop
+    ORB_SLAM2::Parameter<bool> pause("Pause", false,  true, ORB_SLAM2::ParameterGroup::VISUAL);
+    ORB_SLAM2::Parameter<bool> nextFrame("Next frame", false, false, ORB_SLAM2::ParameterGroup::VISUAL);
     cv::Mat im;
     for(int ni=0; ni<nImages; ni++)
     {
@@ -88,9 +90,29 @@ int main(int argc, char **argv)
 #else
         std::chrono::monotonic_clock::time_point t1 = std::chrono::monotonic_clock::now();
 #endif
-
-        // Pass the image to the SLAM system
-        SLAM.TrackMonocular(im,tframe);
+        bool frame_played = false;
+        while(pause())
+        {
+            if(nextFrame())
+            {
+                SLAM.TrackMonocular(im,tframe);
+                frame_played = true;
+                nextFrame.setValue(false);
+            }
+            if(frame_played)
+            {
+                break;
+            }
+            else
+            {
+                usleep(10000);
+            }
+        }
+        if(!frame_played)
+        {
+            // Pass the image to the SLAM system
+            SLAM.TrackMonocular(im,tframe);
+        }
 
 #ifdef COMPILEDWITHC11
         std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
