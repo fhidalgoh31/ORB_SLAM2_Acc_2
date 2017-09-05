@@ -10,7 +10,6 @@
 
 namespace ORB_SLAM2 {
 
-// For new types of parameters add type here, a setValue below and all the stuff in ParameterManager
 typedef boost::variant<bool, int, float, double> ParameterVariant;
 
 enum class ParameterGroup
@@ -40,10 +39,10 @@ protected:
 public:
     virtual ~ParameterBase(){};
     virtual const ParameterVariant getVariant() const { return 0.0; };
-    virtual void setValue(const bool& value){} ;
-    virtual void setValue(const int& value){} ;
-    virtual void setValue(const float& value){} ;
-    virtual void setValue(const double& value){} ;
+    virtual void setValueInternal(const bool& value){} ;
+    virtual void setValueInternal(const int& value){} ;
+    virtual void setValueInternal(const float& value){} ;
+    virtual void setValueInternal(const double& value){} ;
     virtual const ParameterVariant getMinValue() const { return 0.0; };
     virtual const ParameterVariant getMaxValue() const { return 0.0; };
     virtual const ParameterCategory getCategory() const { return ParameterCategory::UNDEFINED; };
@@ -99,11 +98,12 @@ public:
     virtual ~Parameter(){};
 
     const T& getValue() const { return mValue; };
+    virtual void setValue(const T& value) { mValue = value; mChangedExternally = true; };
     const bool checkAndResetIfChanged()
     {
-        if(mChanged)
+        if(mChangedThroughPangolin)
         {
-            mChanged = false;
+            mChangedThroughPangolin = false;
             return true;
         }
         else
@@ -130,12 +130,13 @@ protected:
     virtual const std::string getName() const override { return mName; };
     virtual const ParameterGroup getGroup() const override { return mGroup; };
     virtual const ParameterVariant getVariant() const override { return mValue; }; // cannot return a const ref because implicitly casted
-    virtual void setValue(const T& value) override { mValue = value; };
+    virtual void setValueInternal(const T& value) override { mValue = value; };
 
     T mValue;
     std::string mName;
     ParameterGroup mGroup;
-    bool mChanged;
+    bool mChangedThroughPangolin;
+    bool mChangedExternally;
 };
 
 
@@ -230,29 +231,38 @@ private:
         // If the ParameterCategory is TEXTINPUT the pangolin::var needs to be cast
         // from a string to the type value holds in the parameter, this is done here
         // through a boost::lexical_cast. All other cases are managed by the else block
+        auto& param_value = boost::get<T>(param->getVariant());
+
         if (param->getCategory() == ParameterCategory::TEXTINPUT)
         {
             auto& pango_var = boost::get<pangolin::Var<std::string>* >(pango_var_variant);
-            auto& value = boost::get<T>(param->getVariant());
             T pango_var_value = boost::lexical_cast<T>(pango_var->Get());
 
-            if(pango_var_value != value)
+            if(pango_var_value != param_value)
             {
-                param->setValue(pango_var_value);
-                static_cast<Parameter<T>* >(param)->mChanged = true;
-                DLOG(INFO) << "Parameter value of " << param->getName() <<" is: " << boost::get<T>(param->getVariant());
+                param->setValueInternal(pango_var_value);
+                static_cast<Parameter<T>* >(param)->mChangedThroughPangolin = true;
+                DLOG(INFO) << "Parameter value of " << param->getName() <<" is: " << param_value;
             }
         }
         else
         {
             auto& pango_var = boost::get<pangolin::Var<T>* >(pango_var_variant);
-            auto& value = boost::get<T>(param->getVariant());
 
-            if(pango_var->Get() != value)
+            if(pango_var->Get() != param_value)
             {
-                param->setValue(pango_var->Get());
-                static_cast<Parameter<T>* >(param)->mChanged = true;
-                DLOG(INFO) << "Parameter value of " << param->getName() <<" is: " << boost::get<T>(param->getVariant());
+                if(static_cast<Parameter<T>* >(param)->mChangedExternally)
+                {
+                    pango_var->operator=(param_value);
+                    static_cast<Parameter<T>* >(param)->mChangedExternally = false;
+                    DLOG(INFO) << "Parameter value of " << param->getName() <<" is: " << param_value;
+                }
+                else
+                {
+                    param->setValueInternal(pango_var->Get());
+                    static_cast<Parameter<T>* >(param)->mChangedThroughPangolin = true;
+                    DLOG(INFO) << "Parameter value of " << param->getName() <<" is: " << param_value;
+                }
             }
         }
     }
