@@ -5,6 +5,7 @@
 #include <vector>
 #include <pangolin/pangolin.h>
 #include <boost/variant.hpp>
+#include <boost/lexical_cast.hpp>
 #include <glog/logging.h>
 
 namespace ORB_SLAM2 {
@@ -17,6 +18,7 @@ class ParameterBase {
   enum ParameterCategory{
      MINMAX,
      BOOL,
+     TEXTINPUT,
      UNDEFINED
   };
 
@@ -43,20 +45,31 @@ class Parameter : public ParameterBase {
 
   Parameter(){};
 
-  Parameter(const std::string& name, const T& value)
+  // if toggle is set to false this will create a button, otherwise a switch
+  Parameter(const std::string& name, const bool& value, const bool& toggle)
       : mCategory(ParameterCategory::BOOL)
       , mMinValue(0)
-      , mMaxValue(0)
+      , mMaxValue(toggle)
       , mValue(value)
       , mName(name)
   {
     parameters.push_back(this);
   }
 
-  Parameter(const std::string& name, const T& value, const T& minValue, const T& maxValue)
+  Parameter(const std::string& name, const T& value, const T& minValue, const T& maxValue, const std::string group="parameters")
       : mCategory(ParameterCategory::MINMAX)
       , mMinValue(minValue)
       , mMaxValue(maxValue)
+      , mValue(value)
+      , mName(name)
+  {
+    parameters.push_back(this);
+  }
+
+  Parameter(const std::string& name, const T& value)
+      : mCategory(ParameterCategory::TEXTINPUT)
+      , mMinValue(0)
+      , mMaxValue(0)
       , mValue(value)
       , mName(name)
   {
@@ -107,7 +120,7 @@ class Parameter : public ParameterBase {
 class ParameterManager : public ParameterBase {
   public:
 
-  typedef boost::variant<pangolin::Var<bool>*, pangolin::Var<int>*, pangolin::Var<float>*, pangolin::Var<double>*> PangolinVariants;
+  typedef boost::variant<pangolin::Var<bool>*, pangolin::Var<int>*, pangolin::Var<float>*, pangolin::Var<double>*, pangolin::Var<std::string>* > PangolinVariants;
   typedef std::map<std::string, std::pair<ParameterBase*, PangolinVariants>> ParameterPairMap;
 
   static ParameterPairMap& createPangolinEntries(const std::string& panel_name)
@@ -176,18 +189,44 @@ class ParameterManager : public ParameterBase {
               panel_name + "." + param->getName(), boost::get<T>(param->getVariant()),
               boost::get<T>(param->getMinValue()),boost::get<T>(param->getMaxValue()))));
     }
+    else if (param->getCategory() == ParameterCategory::TEXTINPUT)
+    {
+      DLOG(INFO) << "Inside createPangolinEntry";
+      pangolinParams[param->getName()] = std::make_pair(param, new pangolin::Var<std::string>(
+              panel_name + "." + param->getName(), std::to_string(boost::get<T>(param->getVariant()))));
+    }
   }
 
   template<typename T>
   static void updateValue(ParameterBase* param, PangolinVariants& pango_var_variant)
   {
-    auto& pango_var =  boost::get<pangolin::Var<T>* >(pango_var_variant);
-    auto& value = boost::get<T>(param->getVariant());
-    if(pango_var->Get() != value)
+    // If the ParameterCategory is TEXTINPUT the pangolin::var needs to be cast
+    // from a string to the type value holds in the parameter, this is done here
+    // through a boost::lexical_cast. All other cases are managed by the else block
+    if (param->getCategory() == ParameterCategory::TEXTINPUT)
     {
-      param->setValue(pango_var->Get());
-      static_cast<Parameter<T>* >(param)->mChanged = true;
-      DLOG(INFO) << "Parameter value of " << param->getName() <<" is: " << boost::get<T>(param->getVariant());
+      auto& pango_var = boost::get<pangolin::Var<std::string>* >(pango_var_variant);
+      auto& value = boost::get<T>(param->getVariant());
+      T pango_var_value = boost::lexical_cast<T>(pango_var->Get());
+
+      if(pango_var_value != value)
+      {
+        param->setValue(pango_var_value);
+        static_cast<Parameter<T>* >(param)->mChanged = true;
+        DLOG(INFO) << "Parameter value of " << param->getName() <<" is: " << boost::get<T>(param->getVariant());
+      }
+    }
+    else
+    {
+      auto& pango_var = boost::get<pangolin::Var<T>* >(pango_var_variant);
+      auto& value = boost::get<T>(param->getVariant());
+
+      if(pango_var->Get() != value)
+      {
+        param->setValue(pango_var->Get());
+        static_cast<Parameter<T>* >(param)->mChanged = true;
+        DLOG(INFO) << "Parameter value of " << param->getName() <<" is: " << boost::get<T>(param->getVariant());
+      }
     }
   }
   static ParameterPairMap pangolinParams;
