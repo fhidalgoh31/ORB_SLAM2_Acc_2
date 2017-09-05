@@ -66,8 +66,8 @@ void Viewer::Run()
     glEnable (GL_BLEND);
     glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-
-    auto& menu_panel = pangolin::CreatePanel("menu").SetBounds(0.0,1.0,0.0,pangolin::Attach::Pix(175));
+    // standart view by orb slam
+    auto& menuPanel = pangolin::CreatePanel("menu").SetBounds(0.0,1.0,0.0,pangolin::Attach::Pix(175));
     pangolin::Var<bool> menuFollowCamera("menu.Follow Camera",true,true);
     pangolin::Var<bool> menuShowPoints("menu.Show Points",true,true);
     pangolin::Var<bool> menuShowKeyFrames("menu.Show KeyFrames",true,true);
@@ -75,12 +75,73 @@ void Viewer::Run()
     pangolin::Var<bool> menuLocalizationMode("menu.Localization Mode",false,true);
     pangolin::Var<bool> menuReset("menu.Reset",false,false);
 
+    // paramter view shows sliders for numerical parameters
+    // //TODO : group them by module e.g. parameters.initialization
+    auto& parameterPanel = pangolin::CreatePanel("parameters").SetBounds(0.0,1.0,0.0,pangolin::Attach::Pix(175));
+    auto parameter_entries = ParameterManager::createPangolinEntries("parameters");
+    parameterPanel.ToggleShow();
 
-    auto& parameter_panel = pangolin::CreatePanel("parameters").SetBounds(0.0,1.0,0.0,pangolin::Attach::Pix(175));
-    auto entries = ParameterManager::createPangolinEntries("parameters");
-    parameter_panel.ToggleShow();
+    // visual parameters are activated via Ctrl+V, these allow to switch on/off which
+    // modules are visualized
+    auto& visualParameterPanel = pangolin::CreatePanel("visual_parameters").SetBounds(0.0,1.0,0.0,pangolin::Attach::Pix(175));
+    // auto visual_entries = ParameterManager::createPangolinEntries("visual_parameters");
+    visualParameterPanel.ToggleShow();
 
+    // open parameter pane when pressing Ctrl+p
+    pangolin::RegisterKeyPressCallback(pangolin::PANGO_CTRL + 'p', [&]{
+            if(parameterPanel.IsShown())
+            {
+                if (!menuPanel.IsShown())
+                {
+                    menuPanel.ToggleShow();
+                }
+                if (visualParameterPanel.IsShown())
+                {
+                    visualParameterPanel.ToggleShow();
+                }
+                parameterPanel.ToggleShow();
+            }
+            else
+            {
+                if (menuPanel.IsShown())
+                {
+                    menuPanel.ToggleShow();
+                }
+                if (visualParameterPanel.IsShown())
+                {
+                    visualParameterPanel.ToggleShow();
+                }
+                parameterPanel.ToggleShow();
+            }
+            });
 
+    // open visual parameter pane when pressing Ctrl+v
+    pangolin::RegisterKeyPressCallback(pangolin::PANGO_CTRL + 'v', [&]{
+            if(visualParameterPanel.IsShown())
+            {
+                if (!menuPanel.IsShown())
+                {
+                    menuPanel.ToggleShow();
+                }
+                if (parameterPanel.IsShown())
+                {
+                    parameterPanel.ToggleShow();
+                }
+                visualParameterPanel.ToggleShow();
+            }
+            else
+            {
+                if (menuPanel.IsShown())
+                {
+                    menuPanel.ToggleShow();
+                }
+                if (parameterPanel.IsShown())
+                {
+                    parameterPanel.ToggleShow();
+                }
+                visualParameterPanel.ToggleShow();
+            }
+            });
 
     // Define Camera Render Object (for view / scene browsing)
     pangolin::OpenGlRenderState s_cam(
@@ -95,12 +156,6 @@ void Viewer::Run()
 
     pangolin::OpenGlMatrix Twc;
     Twc.SetIdentity();
-
-    // open parameter pane when pressing Ctrl+P
-    pangolin::RegisterKeyPressCallback(pangolin::PANGO_CTRL + 'p', [&]{
-            menu_panel.ToggleShow();
-            parameter_panel.ToggleShow();
-            });
 
     cv::namedWindow("ORB-SLAM2: Current Frame");
 
