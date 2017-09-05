@@ -21,6 +21,8 @@
 #ifndef ORBEXTRACTOR_H
 #define ORBEXTRACTOR_H
 
+#include "Parameter.h"
+
 #include <vector>
 #include <list>
 #include <opencv/cv.h>
@@ -108,6 +110,8 @@ protected:
     std::vector<float> mvInvScaleFactor;
     std::vector<float> mvLevelSigma2;
     std::vector<float> mvInvLevelSigma2;
+
+    Parameter<bool> visualizeExtractor;
 };
 
 } //namespace ORB_SLAM

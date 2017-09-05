@@ -412,6 +412,7 @@ ORBextractor::ORBextractor(int _nfeatures, float _scaleFactor, int _nlevels,
          int _iniThFAST, int _minThFAST):
     nfeatures(_nfeatures), scaleFactor(_scaleFactor), nlevels(_nlevels),
     iniThFAST(_iniThFAST), minThFAST(_minThFAST)
+    , visualizeExtractor("Extractor", false, false, ParameterGroup::VISUAL)
 {
     mvScaleFactor.resize(nlevels);
     mvLevelSigma2.resize(nlevels);
@@ -1130,6 +1131,12 @@ void ORBextractor::operator()( InputArray _image, InputArray _mask, vector<KeyPo
         }
         // And add the keypoints to the output
         _keypoints.insert(_keypoints.end(), keypoints.begin(), keypoints.end());
+    }
+
+    if(visualizeExtractor())
+    {
+        cv::imshow("ORBExtractor", image);
+        cv::waitKey(1);
     }
 }
 
