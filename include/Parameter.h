@@ -17,10 +17,12 @@ enum class ParameterGroup
     GENERAL,
     VISUAL,
     ORBEXTRACTOR,
-    TRACKING,
     INITIALIZATION,
+    TRACKING,
+    RELOCALIZATION,
+    LOCAL_MAPPING,
+    LOOP_CLOSING,
     UNDEFINED
-    //TODO : add more groups
 };
 
 class ParameterBase
