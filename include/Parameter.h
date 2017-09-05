@@ -191,7 +191,6 @@ class ParameterManager : public ParameterBase {
     }
     else if (param->getCategory() == ParameterCategory::TEXTINPUT)
     {
-      DLOG(INFO) << "Inside createPangolinEntry";
       pangolinParams[param->getName()] = std::make_pair(param, new pangolin::Var<std::string>(
               panel_name + "." + param->getName(), std::to_string(boost::get<T>(param->getVariant()))));
     }
