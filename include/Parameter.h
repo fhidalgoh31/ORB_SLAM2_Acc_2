@@ -189,7 +189,8 @@ private:
         if (param->getCategory() == ParameterCategory::BOOL)
         {
             pangolinParams[param->getName()] = std::make_pair(param, (new pangolin::Var<T>(
-                            panel_name + "." + param->getName(), boost::get<T>(param->getVariant()))));
+                            panel_name + "." + param->getName(), boost::get<T>(param->getVariant()),
+                            boost::get<T>(param->getMaxValue()))));
         }
         else if (param->getCategory() == ParameterCategory::MINMAX)
         {
