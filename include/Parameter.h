@@ -63,7 +63,7 @@ public:
 
     // if toggle is set to false this will create a button, otherwise a switch
     Parameter(const std::string& name, const bool& value, const bool& toggle,
-              const ParameterGroup& group = ParameterGroup::GENERAL)
+              const ParameterGroup& group)
         : mCategory(ParameterCategory::BOOL)
         , mMinValue(0)
         , mMaxValue(toggle)
@@ -75,7 +75,7 @@ public:
     }
 
     Parameter(const std::string& name, const T& value, const T& minValue,
-              const T& maxValue, const ParameterGroup& group = ParameterGroup::GENERAL)
+              const T& maxValue, const ParameterGroup& group)
         : mCategory(ParameterCategory::MINMAX)
         , mMinValue(minValue)
         , mMaxValue(maxValue)
@@ -86,7 +86,7 @@ public:
         parameters.push_back(this);
     }
 
-    Parameter(const std::string& name, const T& value, const ParameterGroup& group = ParameterGroup::GENERAL)
+    Parameter(const std::string& name, const T& value, const ParameterGroup& group)
         : mCategory(ParameterCategory::TEXTINPUT)
         , mMinValue(0)
         , mMaxValue(0)
