@@ -49,7 +49,7 @@ Tracking::Tracking(System *pSys, ORBVocabulary* pVoc, FrameDrawer *pFrameDrawer,
     mpKeyFrameDB(pKFDB), mpInitializer(static_cast<Initializer*>(NULL)), mpSystem(pSys), mpViewer(NULL),
     mpFrameDrawer(pFrameDrawer), mpMapDrawer(pMapDrawer), mpMap(pMap), mnLastRelocFrameId(0)
     , mfSettings(strSettingPath, cv::FileStorage::READ)
-    , mnMinMatchesForTracking("Min tracking matches", 15, 0, 500, ParameterGroup::TRACKING)
+    , mnMinMatchesForTracking("Min matches", 15, 0, 500, ParameterGroup::TRACKING)
     , nFeatures("Num features", mfSettings["ORBextractor.nFeatures"], 0, 5000, ParameterGroup::ORBEXTRACTOR)
     , fScaleFactor("Scale factor", mfSettings["ORBextractor.scaleFactor"], 1.001, 1.5, ParameterGroup::ORBEXTRACTOR)
     , nLevels("Num levels", mfSettings["ORBextractor.nLevels"], 1, 18, ParameterGroup::ORBEXTRACTOR)
