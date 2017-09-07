@@ -63,10 +63,10 @@ public:
       cv::OutputArray descriptors);
 
     int inline GetLevels(){
-        return nlevels;}
+        return nLevels();}
 
     float inline GetScaleFactor(){
-        return scaleFactor;}
+        return scaleFactor();}
 
     std::vector<float> inline GetScaleFactors(){
         return mvScaleFactor;
@@ -96,12 +96,6 @@ protected:
     void ComputeKeyPointsOld(std::vector<std::vector<cv::KeyPoint> >& allKeypoints);
     std::vector<cv::Point> pattern;
 
-    int nfeatures;
-    double scaleFactor;
-    int nlevels;
-    int iniThFAST;
-    int minThFAST;
-
     std::vector<int> mnFeaturesPerLevel;
 
     std::vector<int> umax;
@@ -111,7 +105,12 @@ protected:
     std::vector<float> mvLevelSigma2;
     std::vector<float> mvInvLevelSigma2;
 
-    static Parameter<bool> visualizeExtractor;
+    Parameter<bool> visualizeExtractor;
+    Parameter<int> nFeatures;
+    Parameter<float> scaleFactor;
+    Parameter<int> nLevels;
+    Parameter<int> iniThFAST;
+    Parameter<int> minThFAST;
 };
 
 } //namespace ORB_SLAM

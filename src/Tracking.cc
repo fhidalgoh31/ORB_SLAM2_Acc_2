@@ -50,11 +50,6 @@ Tracking::Tracking(System *pSys, ORBVocabulary* pVoc, FrameDrawer *pFrameDrawer,
     mpFrameDrawer(pFrameDrawer), mpMapDrawer(pMapDrawer), mpMap(pMap), mnLastRelocFrameId(0)
     , mfSettings(strSettingPath, cv::FileStorage::READ)
     , mnMinMatchesForTracking("Min matches", 15, 0, 500, ParameterGroup::TRACKING)
-    , nFeatures("Num features", mfSettings["ORBextractor.nFeatures"], 0, 5000, ParameterGroup::ORBEXTRACTOR)
-    , fScaleFactor("Scale factor", mfSettings["ORBextractor.scaleFactor"], 1.001, 1.5, ParameterGroup::ORBEXTRACTOR)
-    , nLevels("Num levels", mfSettings["ORBextractor.nLevels"], 1, 18, ParameterGroup::ORBEXTRACTOR)
-    , fIniThFAST("IniThFAST", mfSettings["ORBextractor.iniThFAST"], 0, 50, ParameterGroup::ORBEXTRACTOR)
-    , fMinThFAST("MinThFAST", mfSettings["ORBextractor.minThFAST"], 0, 100, ParameterGroup::ORBEXTRACTOR)
 {
     // Load camera parameters from settings file
 
@@ -117,27 +112,26 @@ Tracking::Tracking(System *pSys, ORBVocabulary* pVoc, FrameDrawer *pFrameDrawer,
 
     // Load ORB parameters
 
-    // int nFeatures = mfSettings["ORBextractor.nFeatures"];
-    // float fScaleFactor = mfSettings["ORBextractor.scaleFactor"];
-    // int nLevels = mfSettings["ORBextractor.nLevels"];
-    // int fIniThFAST = mfSettings["ORBextractor.iniThFAST"];
-    // int fMinThFAST = mfSettings["ORBextractor.minThFAST"];
+    int nFeatures = mfSettings["ORBextractor.nFeatures"];
+    float fScaleFactor = mfSettings["ORBextractor.scaleFactor"];
+    int nLevels = mfSettings["ORBextractor.nLevels"];
+    int fIniThFAST = mfSettings["ORBextractor.iniThFAST"];
+    int fMinThFAST = mfSettings["ORBextractor.minThFAST"];
 
-
-    mpORBextractorLeft = new ORBextractor(nFeatures(),fScaleFactor(),nLevels(),fIniThFAST(),fMinThFAST());
+    mpORBextractorLeft = new ORBextractor(nFeatures,fScaleFactor,nLevels,fIniThFAST,fMinThFAST);
 
     if(sensor==System::STEREO)
-        mpORBextractorRight = new ORBextractor(nFeatures(),fScaleFactor(),nLevels(),fIniThFAST(),fMinThFAST());
+        mpORBextractorRight = new ORBextractor(nFeatures,fScaleFactor,nLevels,fIniThFAST,fMinThFAST);
 
     if(sensor==System::MONOCULAR)
-        mpIniORBextractor = new ORBextractor(2*nFeatures(),fScaleFactor(),nLevels(),fIniThFAST(),fMinThFAST()); //param
+        mpIniORBextractor = new ORBextractor(2*nFeatures,fScaleFactor,nLevels,fIniThFAST,fMinThFAST); //param
 
     cout << endl  << "ORB Extractor Parameters: " << endl;
-    cout << "- Number of Features: " << nFeatures() << endl;
-    cout << "- Scale Levels: " << nLevels() << endl;
-    cout << "- Scale Factor: " << fScaleFactor() << endl;
-    cout << "- Initial Fast Threshold: " << fIniThFAST() << endl;
-    cout << "- Minimum Fast Threshold: " << fMinThFAST() << endl;
+    cout << "- Number of Features: " << nFeatures << endl;
+    cout << "- Scale Levels: " << nLevels << endl;
+    cout << "- Scale Factor: " << fScaleFactor << endl;
+    cout << "- Initial Fast Threshold: " << fIniThFAST << endl;
+    cout << "- Minimum Fast Threshold: " << fMinThFAST << endl;
 
     if(sensor==System::STEREO || sensor==System::RGBD)
     {
@@ -274,26 +268,6 @@ cv::Mat Tracking::GrabImageMonocular(const cv::Mat &im, const double &timestamp)
 
 void Tracking::Track()
 {
-    //if any orbextractor parameter changed, recreate the orbextractor
-    if(nFeatures.checkAndResetIfChanged() ||
-       fScaleFactor.checkAndResetIfChanged() ||
-       nLevels.checkAndResetIfChanged() ||
-       fIniThFAST.checkAndResetIfChanged() ||
-       fMinThFAST.checkAndResetIfChanged())
-    {
-        DLOG(INFO) << "ORBExtractor parameter has changed, recreating ORBExtractor";
-        delete mpORBextractorLeft;
-        mpORBextractorLeft = new ORBextractor(nFeatures(),fScaleFactor(),nLevels(),fIniThFAST(),fMinThFAST());
-
-        if(mSensor==System::STEREO)
-        delete mpORBextractorRight;
-            mpORBextractorRight = new ORBextractor(nFeatures(),fScaleFactor(),nLevels(),fIniThFAST(),fMinThFAST());
-
-        if(mSensor==System::MONOCULAR)
-        delete mpIniORBextractor;
-            mpIniORBextractor = new ORBextractor(2*nFeatures(),fScaleFactor(),nLevels(),fIniThFAST(),fMinThFAST());
-    }
-
     if(mState==NO_IMAGES_YET)
     {
         mState = NOT_INITIALIZED;
