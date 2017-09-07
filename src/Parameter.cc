@@ -3,6 +3,6 @@
 namespace ORB_SLAM2
 {
     // static variables
-    std::vector<ParameterBase*> ParameterBase::parameters;
+    std::map<std::string, ParameterBase*> ParameterBase::parametersMap;
     ParameterManager::ParameterPairMap ParameterManager::pangolinParams;
 }

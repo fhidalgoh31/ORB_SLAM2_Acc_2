@@ -36,7 +36,7 @@ protected:
         UNDEFINED
     };
 
-    static std::vector<ParameterBase*> parameters;
+    static std::map<std::string, ParameterBase*> parametersMap;
 
 public:
     virtual ~ParameterBase(){};
@@ -71,7 +71,12 @@ public:
         , mName(name)
         , mGroup(group)
     {
-        parameters.push_back(this);
+        std::map<std::string, ParameterBase*>::iterator found_it = parametersMap.find(name);
+        if(found_it != parametersMap.end())
+        {
+            DLOG(WARNING) << "Duplicate parameter: " << name;
+        }
+        parametersMap[name] = this;
     }
 
     Parameter(const std::string& name, const T& value, const T& minValue,
@@ -83,7 +88,12 @@ public:
         , mName(name)
         , mGroup(group)
     {
-        parameters.push_back(this);
+        std::map<std::string, ParameterBase*>::iterator found_it = parametersMap.find(name);
+        if(found_it != parametersMap.end())
+        {
+            DLOG(WARNING) << "Duplicate parameter: " << name;
+        }
+        parametersMap[name] = this;
     }
 
     Parameter(const std::string& name, const T& value, const ParameterGroup& group)
@@ -94,10 +104,19 @@ public:
         , mName(name)
         , mGroup(group)
     {
-        parameters.push_back(this);
+        std::map<std::string, ParameterBase*>::iterator found_it = parametersMap.find(name);
+        if(found_it != parametersMap.end())
+        {
+            DLOG(WARNING) << "Duplicate parameter: " << name;
+        }
+        parametersMap[name] = this;
     }
 
-    virtual ~Parameter(){};
+    virtual ~Parameter()
+    {
+        DLOG(WARNING) << "Parameter being deleted: " << mName;
+        parametersMap[mName] = nullptr;
+    };
 
     const T& getValue() const { return mValue; };
     virtual void setValue(const T& value) { mValue = value; mChangedExternally = true; };
@@ -114,7 +133,7 @@ public:
         }
     };
 
-    const T& operator()()
+    const T operator()()
     {
         return getValue();
     }
@@ -151,8 +170,9 @@ public:
 
     static ParameterPairMap& createPangolinEntries(const std::string& panel_name, ParameterGroup target_group)
     {
-        for(const auto& param : parameters)
+        for(std::map<std::string, ParameterBase*>::iterator it = parametersMap.begin(); it != parametersMap.end(); it++)
         {
+            auto& param = it->second;
             if(param->getGroup() == target_group)
             {
                 switch (param->getVariant().which())
