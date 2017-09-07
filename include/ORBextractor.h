@@ -111,7 +111,7 @@ protected:
     std::vector<float> mvLevelSigma2;
     std::vector<float> mvInvLevelSigma2;
 
-    Parameter<bool> visualizeExtractor;
+    static Parameter<bool> visualizeExtractor;
 };
 
 } //namespace ORB_SLAM

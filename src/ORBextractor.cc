@@ -74,6 +74,7 @@ const int PATCH_SIZE = 31; //param
 const int HALF_PATCH_SIZE = 15; //param
 const int EDGE_THRESHOLD = 19; //param
 
+Parameter<bool> ORBextractor::visualizeExtractor("Extractor", false, false, ParameterGroup::VISUAL);
 
 static float IC_Angle(const Mat& image, Point2f pt,  const vector<int> & u_max)
 {
@@ -412,7 +413,6 @@ ORBextractor::ORBextractor(int _nfeatures, float _scaleFactor, int _nlevels,
          int _iniThFAST, int _minThFAST):
     nfeatures(_nfeatures), scaleFactor(_scaleFactor), nlevels(_nlevels),
     iniThFAST(_iniThFAST), minThFAST(_minThFAST)
-    , visualizeExtractor("Extractor", false, false, ParameterGroup::VISUAL)
 {
     mvScaleFactor.resize(nlevels);
     mvLevelSigma2.resize(nlevels);
