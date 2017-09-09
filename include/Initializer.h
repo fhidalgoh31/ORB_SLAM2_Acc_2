@@ -21,7 +21,9 @@
 #define INITIALIZER_H
 
 #include<opencv2/opencv.hpp>
+
 #include "Frame.h"
+#include "Parameter.h"
 
 
 namespace ORB_SLAM2
@@ -94,6 +96,7 @@ private:
     // Ransac sets
     vector<vector<size_t> > mvSets;
 
+    static Parameter<bool> visualizeInitialization;
 };
 
 } //namespace ORB_SLAM
