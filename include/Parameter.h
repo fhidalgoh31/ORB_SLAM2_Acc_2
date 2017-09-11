@@ -36,7 +36,7 @@ protected:
         UNDEFINED
     };
 
-    static std::map<std::string, ParameterBase*> parametersMap;
+    static std::map<ParameterGroup, std::map<std::string, ParameterBase*> > parametersMap;
 
 public:
     virtual ~ParameterBase(){};
@@ -71,12 +71,12 @@ public:
         , mName(name)
         , mGroup(group)
     {
-        std::map<std::string, ParameterBase*>::iterator found_it = parametersMap.find(name);
-        if(found_it != parametersMap.end())
+        std::map<std::string, ParameterBase*>::iterator found_it = parametersMap[group].find(name);
+        if(found_it != parametersMap[group].end())
         {
             DLOG(WARNING) << "Duplicate parameter: " << name;
         }
-        parametersMap[name] = this;
+        parametersMap[group][name] = this;
     }
 
     Parameter(const std::string& name, const T& value, const T& minValue,
@@ -88,12 +88,12 @@ public:
         , mName(name)
         , mGroup(group)
     {
-        std::map<std::string, ParameterBase*>::iterator found_it = parametersMap.find(name);
-        if(found_it != parametersMap.end())
+        std::map<std::string, ParameterBase*>::iterator found_it = parametersMap[group].find(name);
+        if(found_it != parametersMap[group].end())
         {
             DLOG(WARNING) << "Duplicate parameter: " << name;
         }
-        parametersMap[name] = this;
+        parametersMap[group][name] = this;
     }
 
     Parameter(const std::string& name, const T& value, const ParameterGroup& group)
@@ -104,18 +104,18 @@ public:
         , mName(name)
         , mGroup(group)
     {
-        std::map<std::string, ParameterBase*>::iterator found_it = parametersMap.find(name);
-        if(found_it != parametersMap.end())
+        std::map<std::string, ParameterBase*>::iterator found_it = parametersMap[group].find(name);
+        if(found_it != parametersMap[group].end())
         {
             DLOG(WARNING) << "Duplicate parameter: " << name;
         }
-        parametersMap[name] = this;
+        parametersMap[group][name] = this;
     }
 
     virtual ~Parameter()
     {
         DLOG(WARNING) << "Parameter being deleted: " << mName;
-        parametersMap[mName] = nullptr;
+        parametersMap[mGroup][mName] = nullptr;
     };
 
     const T& getValue() const { return mValue; };
@@ -170,26 +170,23 @@ public:
 
     static ParameterPairMap& createPangolinEntries(const std::string& panel_name, ParameterGroup target_group)
     {
-        for(std::map<std::string, ParameterBase*>::iterator it = parametersMap.begin(); it != parametersMap.end(); it++)
+        for(std::map<std::string, ParameterBase*>::iterator it = parametersMap[target_group].begin(); it != parametersMap[target_group].end(); it++)
         {
             auto& param = it->second;
-            if(param->getGroup() == target_group)
+            switch (param->getVariant().which())
             {
-                switch (param->getVariant().which())
-                {
-                    case 0: // bool
-                        createPangolinEntry<bool>(param, panel_name);
-                        break;
-                    case 1: // int
-                        createPangolinEntry<int>(param, panel_name);
-                        break;
-                    case 2: // float
-                        createPangolinEntry<float>(param, panel_name);
-                        break;
-                    case 3: // double
-                        createPangolinEntry<double>(param, panel_name);
-                        break;
-                }
+                case 0: // bool
+                    createPangolinEntry<bool>(param, panel_name);
+                    break;
+                case 1: // int
+                    createPangolinEntry<int>(param, panel_name);
+                    break;
+                case 2: // float
+                    createPangolinEntry<float>(param, panel_name);
+                    break;
+                case 3: // double
+                    createPangolinEntry<double>(param, panel_name);
+                    break;
             }
         }
         return pangolinParams;
