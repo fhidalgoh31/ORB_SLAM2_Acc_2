@@ -119,6 +119,10 @@ public:
     // Information from most recent processed frame
     // You can call this right after TrackMonocular (or stereo or RGBD)
     int GetTrackingState();
+
+    // Sets the total frame count so the frame drawer can put it in the current frame
+    void setFrameCount(const int& frameCount);
+
     std::vector<MapPoint*> GetTrackedMapPoints();
     std::vector<cv::KeyPoint> GetTrackedKeyPointsUn();
 

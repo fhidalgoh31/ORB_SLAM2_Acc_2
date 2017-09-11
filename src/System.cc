@@ -489,4 +489,9 @@ vector<cv::KeyPoint> System::GetTrackedKeyPointsUn()
     return mTrackedKeyPointsUn;
 }
 
+void System::setFrameCount(const int& frameCount)
+{
+    mpFrameDrawer->setFrameCount(frameCount);
+}
+
 } //namespace ORB_SLAM

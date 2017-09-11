@@ -29,7 +29,10 @@
 namespace ORB_SLAM2
 {
 
-FrameDrawer::FrameDrawer(Map* pMap):mpMap(pMap)
+FrameDrawer::FrameDrawer(Map* pMap)
+    : mpMap(pMap)
+    , mFrameCounter(0)
+    , mFrameCount(0)
 {
     mState=Tracking::SYSTEM_NOT_READY;
     mIm = cv::Mat(480,640,CV_8UC3, cv::Scalar(0,0,0));
@@ -43,6 +46,8 @@ cv::Mat FrameDrawer::DrawFrame()
     vector<cv::KeyPoint> vCurrentKeys; // KeyPoints in current frame
     vector<bool> vbVO, vbMap; // Tracked MapPoints in current frame
     int state; // Tracking state
+
+    mFrameCounter++;
 
     //Copy variables within scoped mutex
     {
@@ -168,6 +173,10 @@ void FrameDrawer::DrawTextInfo(cv::Mat &im, int nState, cv::Mat &imText)
         s << "KFs: " << nKFs << ", MPs: " << nMPs << ", Matches: " << mnTracked;
         if(mnTrackedVO>0)
             s << ", + VO matches: " << mnTrackedVO;
+        if(mFrameCount > 0)
+        {
+            s << ", Frame: " << mFrameCounter << "/" << mFrameCount;
+        }
     }
     else if(nState==Tracking::LOST)
     {
@@ -222,6 +231,11 @@ void FrameDrawer::Update(Tracking *pTracker)
         }
     }
     mState=static_cast<int>(pTracker->mLastProcessedState);
+}
+
+void FrameDrawer::setFrameCount(const int& frameCount)
+{
+    mFrameCount = frameCount;
 }
 
 } //namespace ORB_SLAM

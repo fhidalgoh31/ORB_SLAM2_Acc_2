@@ -45,6 +45,8 @@ public:
     // Update info from the last processed frame.
     void Update(Tracking *pTracker);
 
+    void setFrameCount(const int& frameCount);
+
     // Draw last processed frame.
     cv::Mat DrawFrame();
 
@@ -66,6 +68,9 @@ protected:
     Map* mpMap;
 
     std::mutex mMutex;
+
+    int mFrameCounter;
+    int mFrameCount;
 };
 
 } //namespace ORB_SLAM
