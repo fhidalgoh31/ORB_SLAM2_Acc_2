@@ -51,7 +51,7 @@ public:
     enum {HARRIS_SCORE=0, FAST_SCORE=1 };
 
     ORBextractor(int nfeatures, float scaleFactor, int nlevels,
-                 int iniThFAST, int minThFAST);
+                 int iniThFAST, int minThFAST, std::string paramPostfix = "");
 
     ~ORBextractor(){}
 
@@ -83,6 +83,10 @@ public:
     std::vector<float> inline GetInverseScaleSigmaSquares(){
         return mvInvLevelSigma2;
     }
+
+    // updates all parameters which are internally derived from the parameter objects below
+    // (nFeatures, scaleFactor, etc.)
+    void updateParameters();
 
     std::vector<cv::Mat> mvImagePyramid;
 
