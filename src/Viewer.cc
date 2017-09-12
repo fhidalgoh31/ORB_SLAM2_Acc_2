@@ -164,12 +164,12 @@ void Viewer::Run()
     // parameter view shows buttons which open parameters for every subcategory
     // //TODO : group them by module e.g. parameters.initialization
     auto& parameterPanel = pangolin::CreatePanel("parameters").SetBounds(0.0,1.0,0.0,pangolin::Attach::Pix(175));
-    pangolin::Var<std::function<void(void)>> extractorButton("parameters.Extractor params", toggleFunctionMap["extractor"]);
-    pangolin::Var<std::function<void(void)>> initializationButton("parameters.Initialization params", toggleFunctionMap["initialization"]);
-    pangolin::Var<std::function<void(void)>> trackingButton("parameters.Tracking params", toggleFunctionMap["tracking"]);
-    pangolin::Var<std::function<void(void)>> relocalizationButton("parameters.Relocalization params", toggleFunctionMap["relocalization"]);
-    pangolin::Var<std::function<void(void)>> localMappingButton("parameters.Local mapping params", toggleFunctionMap["localMapping"]);
-    pangolin::Var<std::function<void(void)>> loopClosingButton("parameters.Loop closing params", toggleFunctionMap["loopClosing"]);
+    pangolin::Var<std::function<void(void)>> extractorButton("parameters.Extractor", toggleFunctionMap["extractor"]);
+    pangolin::Var<std::function<void(void)>> initializationButton("parameters.Initialization", toggleFunctionMap["initialization"]);
+    pangolin::Var<std::function<void(void)>> trackingButton("parameters.Tracking", toggleFunctionMap["tracking"]);
+    pangolin::Var<std::function<void(void)>> relocalizationButton("parameters.Relocalization", toggleFunctionMap["relocalization"]);
+    pangolin::Var<std::function<void(void)>> localMappingButton("parameters.Local mapping", toggleFunctionMap["localMapping"]);
+    pangolin::Var<std::function<void(void)>> loopClosingButton("parameters.Loop closing", toggleFunctionMap["loopClosing"]);
     ParameterManager::createPangolinEntries("parameters", ParameterGroup::GENERAL);
     parameterPanel.ToggleShow();
 
