@@ -262,8 +262,9 @@ private:
             {
                 pango_var->operator=(std::to_string(param_value));
                 static_cast<Parameter<T>* >(param)->mChangedExternally = false;
+                DLOG(INFO) << "Parameter value of " << param->getName() <<" is: " << param_value;
             }
-            if(pango_var_value != param_value)
+            else if(pango_var_value != param_value)
             {
                 param->setValueInternal(pango_var_value);
                 static_cast<Parameter<T>* >(param)->mChangedThroughPangolin = true;
