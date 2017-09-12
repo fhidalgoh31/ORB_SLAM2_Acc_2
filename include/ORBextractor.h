@@ -98,6 +98,8 @@ protected:
                                            const int &maxX, const int &minY, const int &maxY, const int &nFeatures, const int &level);
 
     void ComputeKeyPointsOld(std::vector<std::vector<cv::KeyPoint> >& allKeypoints);
+    void DrawDebugImage(const cv::Mat& inImage, cv::Mat& outImage);
+
     std::vector<cv::Point> pattern;
 
     std::vector<int> mnFeaturesPerLevel;
@@ -116,6 +118,8 @@ protected:
     Parameter<int> iniThFAST;
     Parameter<int> minThFAST;
     Parameter<int> cellWidth;
+
+    cv::Mat mDebugImage;
 };
 
 } //namespace ORB_SLAM

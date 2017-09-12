@@ -1081,6 +1081,11 @@ void ORBextractor::operator()( InputArray _image, InputArray _mask, vector<KeyPo
     Mat image = _image.getMat();
     assert(image.type() == CV_8UC1 );
 
+    if(visualizeExtractor())
+    {
+        image.copyTo(mDebugImage);
+    }
+
     // Pre-compute the scale pyramid
     ComputePyramid(image);
 
@@ -1138,7 +1143,7 @@ void ORBextractor::operator()( InputArray _image, InputArray _mask, vector<KeyPo
     if(visualizeExtractor())
     {
         cv::namedWindow("ORBExtractor", cv::WINDOW_NORMAL);
-        cv::imshow("ORBExtractor", image);
+        cv::imshow("ORBExtractor", mDebugImage);
         cv::waitKey(1);
     }
 }
@@ -1245,6 +1250,11 @@ void ORBextractor::ComputePyramid(cv::Mat image)
                            BORDER_REFLECT_101);
         }
     }
+
+}
+
+void ORBextractor::DrawDebugImage(const cv::Mat& inImage, cv::Mat& outImage)
+{
 
 }
 
