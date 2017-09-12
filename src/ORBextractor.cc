@@ -409,8 +409,10 @@ static int bit_pattern_31_[256*4] =
 };
 
 ORBextractor::ORBextractor(int _nfeatures, float _scaleFactor, int _nlevels,
-         int _iniThFAST, int _minThFAST, bool initialization)
-    : visualizeExtractor("Extractor", false, false, (initialization ? ParameterGroup::UNDEFINED : ParameterGroup::VISUAL))
+         int _iniThFAST, int _minThFAST, std::vector<std::vector<int>> excludedRegions,
+         bool initialization)
+    : mExcludedRegions(excludedRegions)
+    , visualizeExtractor("Extractor", false, false, (initialization ? ParameterGroup::UNDEFINED : ParameterGroup::VISUAL))
     , nFeatures("Num features", _nfeatures, 0, 5000, (initialization ? ParameterGroup::INITIALIZATION : ParameterGroup::ORBEXTRACTOR))
     , scaleFactor("Scale factor", _scaleFactor, 1.001, 1.5, (initialization ? ParameterGroup::INITIALIZATION : ParameterGroup::ORBEXTRACTOR))
     , nLevels("Num levels", _nlevels, 1, 18, (initialization ? ParameterGroup::INITIALIZATION : ParameterGroup::ORBEXTRACTOR))
