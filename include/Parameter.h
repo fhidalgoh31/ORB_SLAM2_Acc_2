@@ -73,7 +73,7 @@ public:
         std::map<std::string, ParameterBase*>::iterator found_it = parametersMap[group].find(name);
         if(found_it != parametersMap[group].end())
         {
-            DLOG(WARNING) << "Duplicate parameter: " << name;
+            LOG(WARNING) << "Duplicate parameter: " << name;
         }
         parametersMap[group][name] = this;
     }
@@ -90,7 +90,7 @@ public:
         std::map<std::string, ParameterBase*>::iterator found_it = parametersMap[group].find(name);
         if(found_it != parametersMap[group].end())
         {
-            DLOG(WARNING) << "Duplicate parameter: " << name;
+            LOG(WARNING) << "Duplicate parameter: " << name;
         }
         parametersMap[group][name] = this;
     }
@@ -106,14 +106,14 @@ public:
         std::map<std::string, ParameterBase*>::iterator found_it = parametersMap[group].find(name);
         if(found_it != parametersMap[group].end())
         {
-            DLOG(WARNING) << "Duplicate parameter: " << name;
+            LOG(WARNING) << "Duplicate parameter: " << name;
         }
         parametersMap[group][name] = this;
     }
 
     virtual ~Parameter()
     {
-        DLOG(WARNING) << "Parameter being deleted: " << mName;
+        LOG(WARNING) << "Parameter being deleted: " << mName;
         parametersMap[mGroup][mName] = nullptr;
     };
 
