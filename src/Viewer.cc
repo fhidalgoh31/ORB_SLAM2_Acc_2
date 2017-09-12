@@ -89,32 +89,32 @@ void Viewer::Run()
     // create the panels for the sub parameters
     std::map<std::string, pangolin::View*> subPanels;
     auto& extractorPanel = pangolin::CreatePanel("extractor").SetBounds(0.0,1.0,pangolin::Attach::Pix(-200),1.0);
-    auto extractorEntries = ParameterManager::createPangolinEntries("extractor", ParameterGroup::ORBEXTRACTOR);
+    ParameterManager::createPangolinEntries("extractor", ParameterGroup::ORBEXTRACTOR);
     subPanels["extractor"] = (&extractorPanel);
     extractorPanel.ToggleShow();
 
     auto& initializePanel = pangolin::CreatePanel("initialization").SetBounds(0.0,1.0,pangolin::Attach::Pix(-200),1.0);
-    auto initializeEntries = ParameterManager::createPangolinEntries("initialization", ParameterGroup::INITIALIZATION);
+    ParameterManager::createPangolinEntries("initialization", ParameterGroup::INITIALIZATION);
     subPanels["initialization"] = (&initializePanel);
     initializePanel.ToggleShow();
 
     auto& trackingPanel = pangolin::CreatePanel("tracking").SetBounds(0.0,1.0,pangolin::Attach::Pix(-200),1.0);
-    auto trackingEntries = ParameterManager::createPangolinEntries("tracking", ParameterGroup::TRACKING);
+    ParameterManager::createPangolinEntries("tracking", ParameterGroup::TRACKING);
     subPanels["tracking"] = &trackingPanel;
     trackingPanel.ToggleShow();
 
     auto& relocalizationPanel = pangolin::CreatePanel("relocalization").SetBounds(0.0,1.0,pangolin::Attach::Pix(-200),1.0);
-    auto relocalizationEntries = ParameterManager::createPangolinEntries("relocalization", ParameterGroup::RELOCALIZATION);
+    ParameterManager::createPangolinEntries("relocalization", ParameterGroup::RELOCALIZATION);
     subPanels["relocalization"] = &relocalizationPanel;
     relocalizationPanel.ToggleShow();
 
     auto& localMappingPanel = pangolin::CreatePanel("localMapping").SetBounds(0.0,1.0,pangolin::Attach::Pix(-200),1.0);
-    auto localMappingEntries = ParameterManager::createPangolinEntries("localMapping", ParameterGroup::LOCAL_MAPPING);
+    ParameterManager::createPangolinEntries("localMapping", ParameterGroup::LOCAL_MAPPING);
     subPanels["localMapping"] = &localMappingPanel;
     localMappingPanel.ToggleShow();
 
     auto& loopClosingPanel = pangolin::CreatePanel("loopClosing").SetBounds(0.0,1.0,pangolin::Attach::Pix(-200),1.0);
-    auto loopClosingEntries = ParameterManager::createPangolinEntries("loopClosing", ParameterGroup::LOOP_CLOSING);
+    ParameterManager::createPangolinEntries("loopClosing", ParameterGroup::LOOP_CLOSING);
     subPanels["loopClosing"] = &loopClosingPanel;
     loopClosingPanel.ToggleShow();
 
@@ -129,6 +129,7 @@ void Viewer::Run()
             d_cam.SetBounds(0.0, 1.0, pangolin::Attach::Pix(175), pangolin::Attach::Pix(-200), -1024.0f/768.0f);
         }
     };
+
     std::map<std::string, std::function<void(void)> > toggleFunctionMap;
     for(std::map<std::string, pangolin::View*>::iterator it = subPanels.begin(); it != subPanels.end(); it++)
     {
@@ -168,13 +169,13 @@ void Viewer::Run()
     pangolin::Var<std::function<void(void)>> relocalizationButton("parameters.Relocalization params", toggleFunctionMap["relocalization"]);
     pangolin::Var<std::function<void(void)>> localMappingButton("parameters.Local mapping params", toggleFunctionMap["localMapping"]);
     pangolin::Var<std::function<void(void)>> loopClosingButton("parameters.Loop closing params", toggleFunctionMap["loopClosing"]);
-    auto parameterEntries = ParameterManager::createPangolinEntries("parameters", ParameterGroup::GENERAL);
+    ParameterManager::createPangolinEntries("parameters", ParameterGroup::GENERAL);
     parameterPanel.ToggleShow();
 
     // visual parameters are activated via Ctrl+V, these allow to switch on/off which
     // modules are visualized
     auto& visualParameterPanel = pangolin::CreatePanel("visual_parameters").SetBounds(0.0,1.0,0.0,pangolin::Attach::Pix(175));
-    auto visual_entries = ParameterManager::createPangolinEntries("visual_parameters", ParameterGroup::VISUAL);
+    ParameterManager::createPangolinEntries("visual_parameters", ParameterGroup::VISUAL);
     visualParameterPanel.ToggleShow();
 
     // open parameter pane when pressing Ctrl+p
