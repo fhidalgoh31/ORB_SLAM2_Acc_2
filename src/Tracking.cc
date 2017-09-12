@@ -117,6 +117,24 @@ Tracking::Tracking(System *pSys, ORBVocabulary* pVoc, FrameDrawer *pFrameDrawer,
     int nLevels = mfSettings["ORBextractor.nLevels"];
     int fIniThFAST = mfSettings["ORBextractor.iniThFAST"];
     int fMinThFAST = mfSettings["ORBextractor.minThFAST"];
+    cv::FileNode regionsNode = mfSettings["ORBextractor.ExcludedRegions"];
+    std::vector<std::vector<int> > excludedRegions;
+    std::string regionsStr = "[";
+    for (cv::FileNodeIterator it = regionsNode.begin(); it != regionsNode.end(); it++)
+    {
+        cv::FileNode regionNode = *it;
+        regionsStr += " [";
+        std::vector<int> region;
+        for (cv::FileNodeIterator it2 = regionNode.begin(); it2 != regionNode.end(); it2++)
+        {
+            region.reserve(4);
+            region.push_back(static_cast<int>(*it2));
+            regionsStr += " " + std::to_string(static_cast<int>(*it2)) + " ";
+        }
+        excludedRegions.push_back(region);
+        regionsStr += " ]";
+    }
+    regionsStr += "]";
 
     mpORBextractorLeft = new ORBextractor(nFeatures,fScaleFactor,nLevels,fIniThFAST,fMinThFAST);
 
@@ -132,6 +150,7 @@ Tracking::Tracking(System *pSys, ORBVocabulary* pVoc, FrameDrawer *pFrameDrawer,
     cout << "- Scale Factor: " << fScaleFactor << endl;
     cout << "- Initial Fast Threshold: " << fIniThFAST << endl;
     cout << "- Minimum Fast Threshold: " << fMinThFAST << endl;
+    cout << "- Excluded Regions: " << regionsStr << endl;
 
     if(sensor==System::STEREO || sensor==System::RGBD)
     {
