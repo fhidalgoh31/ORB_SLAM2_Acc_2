@@ -1,7 +1,6 @@
 #ifndef PARAMETER_H
 #define PARAMETER_H
 
-#include <memory>
 #include <vector>
 #include <pangolin/pangolin.h>
 #include <boost/variant.hpp>
@@ -166,9 +165,9 @@ class ParameterManager : public ParameterBase
 public:
 
     typedef boost::variant<pangolin::Var<bool>*, pangolin::Var<int>*, pangolin::Var<float>*, pangolin::Var<double>*, pangolin::Var<std::string>* > PangolinVariants;
-    typedef std::map<std::string, std::pair<ParameterBase*, PangolinVariants>> ParameterPairMap;
+    typedef std::map<ParameterGroup, std::map<std::string, std::pair<ParameterBase*, PangolinVariants>>> ParameterPairMap;
 
-    static ParameterPairMap& createPangolinEntries(const std::string& panel_name, ParameterGroup target_group)
+    static void createPangolinEntries(const std::string& panel_name, ParameterGroup target_group)
     {
         for(std::map<std::string, ParameterBase*>::iterator it = parametersMap[target_group].begin(); it != parametersMap[target_group].end(); it++)
         {
@@ -189,33 +188,35 @@ public:
                     break;
             }
         }
-        return pangolinParams;
     }
 
     static void updateParameters()
     {
-        for(ParameterPairMap::iterator it = pangolinParams.begin(); it != pangolinParams.end(); it++)
+        for(ParameterPairMap::iterator it_groups = pangolinParams.begin(); it_groups != pangolinParams.end(); it_groups++)
         {
-            auto& pango_var_variant = it->second.second;
-            auto& param = it->second.first;
+            for(std::map<std::string, std::pair<ParameterBase*, PangolinVariants>>::iterator it = it_groups->second.begin(); it != it_groups->second.end(); it++)
+            {
+                auto& pango_var_variant = it->second.second;
+                auto& param = it->second.first;
 
-            const int& type = param->getVariant().which();
+                const int& type = param->getVariant().which();
 
-            if (type == 0) // bool
-            {
-                updateValue<bool>(param, pango_var_variant);
-            }
-            else if (type == 1) // int
-            {
-                updateValue<int>(param, pango_var_variant);
-            }
-            else if (type == 2) // float
-            {
-                updateValue<float>(param, pango_var_variant);
-            }
-            else if (type == 3) // double
-            {
-                updateValue<double>(param, pango_var_variant);
+                if (type == 0) // bool
+                {
+                    updateValue<bool>(param, pango_var_variant);
+                }
+                else if (type == 1) // int
+                {
+                    updateValue<int>(param, pango_var_variant);
+                }
+                else if (type == 2) // float
+                {
+                    updateValue<float>(param, pango_var_variant);
+                }
+                else if (type == 3) // double
+                {
+                    updateValue<double>(param, pango_var_variant);
+                }
             }
         }
     }
@@ -227,19 +228,19 @@ private:
     {
         if (param->getCategory() == ParameterCategory::BOOL)
         {
-            pangolinParams[param->getName()] = std::make_pair(param, (new pangolin::Var<T>(
+            pangolinParams[param->getGroup()][param->getName()] = std::make_pair(param, (new pangolin::Var<T>(
                             panel_name + "." + param->getName(), boost::get<T>(param->getVariant()),
                             boost::get<T>(param->getMaxValue()))));
         }
         else if (param->getCategory() == ParameterCategory::MINMAX)
         {
-            pangolinParams[param->getName()] = std::make_pair(param, (new pangolin::Var<T>(
+            pangolinParams[param->getGroup()][param->getName()] = std::make_pair(param, (new pangolin::Var<T>(
                             panel_name + "." + param->getName(), boost::get<T>(param->getVariant()),
                             boost::get<T>(param->getMinValue()),boost::get<T>(param->getMaxValue()))));
         }
         else if (param->getCategory() == ParameterCategory::TEXTINPUT)
         {
-            pangolinParams[param->getName()] = std::make_pair(param, new pangolin::Var<std::string>(
+            pangolinParams[param->getGroup()][param->getName()] = std::make_pair(param, new pangolin::Var<std::string>(
                         panel_name + "." + param->getName(), std::to_string(boost::get<T>(param->getVariant()))));
         }
     }
@@ -257,6 +258,11 @@ private:
             auto& pango_var = boost::get<pangolin::Var<std::string>* >(pango_var_variant);
             T pango_var_value = boost::lexical_cast<T>(pango_var->Get());
 
+            if(static_cast<Parameter<T>* >(param)->mChangedExternally)
+            {
+                pango_var->operator=(std::to_string(param_value));
+                static_cast<Parameter<T>* >(param)->mChangedExternally = false;
+            }
             if(pango_var_value != param_value)
             {
                 param->setValueInternal(pango_var_value);
