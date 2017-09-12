@@ -98,7 +98,8 @@ protected:
                                            const int &maxX, const int &minY, const int &maxY, const int &nFeatures, const int &level);
 
     void ComputeKeyPointsOld(std::vector<std::vector<cv::KeyPoint> >& allKeypoints);
-    void DrawDebugImage(const cv::Mat& inImage, cv::Mat& outImage);
+
+    void DrawDebugImageCells();
 
     std::vector<cv::Point> pattern;
 
