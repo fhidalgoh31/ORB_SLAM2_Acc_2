@@ -23,7 +23,7 @@ def save_boxes_to(boxes, output_yaml):
     with open(output_yaml, 'r') as yaml_file:
         content = yaml.safe_load(yaml_file)
 
-    content["excluded_regions"] = boxes
+    content["ORBextractor.ExcludedRegions"] = boxes
 
     with open(output_yaml, 'w') as yaml_file:
         yaml.safe_dump(content, yaml_file, default_flow_style=False)
@@ -74,6 +74,14 @@ in ORB-SLAM", formatter_class=argparse.RawTextHelpFormatter)
 arg_parser.add_argument("input_image")
 arg_parser.add_argument("output_yaml")
 args = arg_parser.parse_args()
+
+print(
+"Usage:\n\
+Click and drag to create a exclusion rectangle\n\
+Press Space to clear all rectangles\n\
+Press Enter to save\n\
+Press Esc to quit"
+        )
 
 count = 0
 img = cv2.imread(args.input_image)
