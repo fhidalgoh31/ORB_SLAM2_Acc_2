@@ -555,6 +555,7 @@ vector<cv::KeyPoint> ORBextractor::DistributeOctTree(const vector<cv::KeyPoint>&
     vector<ExtractorNode*> vpIniNodes;
     vpIniNodes.resize(nIni);
 
+    //This is actually pretty much always going to be exactly one node for the beginning
     for(int i=0; i<nIni; i++)
     {
         ExtractorNode ni;
@@ -577,10 +578,9 @@ vector<cv::KeyPoint> ORBextractor::DistributeOctTree(const vector<cv::KeyPoint>&
 
     list<ExtractorNode>::iterator lit = lNodes.begin();
 
-    // int counter = 0;
+    // remove all nodes that don't contain any features
     while(lit!=lNodes.end())
     {
-        // counter++;
         if(lit->vKeys.size()==1)
         {
             lit->bNoMore=true;
@@ -596,8 +596,6 @@ vector<cv::KeyPoint> ORBextractor::DistributeOctTree(const vector<cv::KeyPoint>&
         }
     }
 
-    // DLOG(INFO) << "";
-    // DLOG(INFO) << "Amount of nodes after thinning: " << lNodes.size();
     bool bFinish = false;
 
     int iteration = 0;
@@ -812,7 +810,7 @@ void ORBextractor::ComputeKeyPointsOctTree(vector<vector<KeyPoint> >& allKeypoin
 
         for(int i=0; i<nRows; i++)
         {
-            const float iniY =minBorderY+i*hCell;
+            const float iniY = minBorderY+i*hCell;
             float maxY = iniY+hCell+6; //param
             // float oldmaxY = maxY;
 
