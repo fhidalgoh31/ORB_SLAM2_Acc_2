@@ -72,6 +72,8 @@ int main(int argc, char **argv)
     // Main loop
     ORB_SLAM2::Parameter<bool> pause("Pause", false,  true, ORB_SLAM2::ParameterGroup::VISUAL);
     ORB_SLAM2::Parameter<bool> nextFrame("Next frame", false, false, ORB_SLAM2::ParameterGroup::VISUAL);
+    ORB_SLAM2::Parameter<int> fastForward("Fast forward", 0, ORB_SLAM2::ParameterGroup::VISUAL);
+    int forwardCounter = 0;
     cv::Mat im;
     for(int ni=0; ni<nImages; ni++)
     {
@@ -84,6 +86,13 @@ int main(int argc, char **argv)
             cerr << endl << "Failed to load image at: "
                  << string(argv[3]) << "/" << vstrImageFilenames[ni] << endl;
             return 1;
+        }
+        if(fastForward() != 0)
+        {
+            LOG(INFO) << "Fast forwarding by " << fastForward() << " frames.";
+            SLAM.ignoreFPS(true);
+            forwardCounter = fastForward();
+            fastForward.setValue(0);
         }
 
 #ifdef COMPILEDWITHC11
@@ -125,15 +134,28 @@ int main(int argc, char **argv)
 
         vTimesTrack[ni]=ttrack;
 
-        // Wait to load the next frame
-        double T=0;
-        if(ni<nImages-1)
-            T = vTimestamps[ni+1]-tframe;
-        else if(ni>0)
-            T = tframe-vTimestamps[ni-1];
+        if(forwardCounter != 0)
+        {
+            // Go as fast as you can
+            forwardCounter--;
+            if(forwardCounter == 0)
+            {
+                LOG(INFO) << "Fast forwarding done.";
+                SLAM.ignoreFPS(false);
+            }
+        }
+        else
+        {
+            // Wait to load the next frame
+            double T=0;
+            if(ni<nImages-1)
+                T = vTimestamps[ni+1]-tframe;
+            else if(ni>0)
+                T = tframe-vTimestamps[ni-1];
 
-        if(ttrack<T)
-            usleep((T-ttrack)*1e6);
+            if(ttrack<T)
+                usleep((T-ttrack)*1e6);
+        }
     }
 
     // Stop all threads

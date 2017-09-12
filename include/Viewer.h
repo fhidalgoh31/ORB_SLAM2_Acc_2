@@ -57,6 +57,8 @@ public:
 
     void Release();
 
+    void ignoreFPS(const bool& ignore);
+
 private:
 
     bool Stop();
@@ -81,6 +83,8 @@ private:
     bool mbStopped;
     bool mbStopRequested;
     std::mutex mMutexStop;
+
+    bool mIgnoreFPS;
 };
 
 }

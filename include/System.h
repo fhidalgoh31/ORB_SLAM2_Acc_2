@@ -123,6 +123,9 @@ public:
     // Sets the total frame count so the frame drawer can put it in the current frame
     void setFrameCount(const int& frameCount);
 
+    // Tells the Viewer to ignore FPS so the algorithm can run as fast as possible
+    void ignoreFPS(const bool& ignore);
+
     std::vector<MapPoint*> GetTrackedMapPoints();
     std::vector<cv::KeyPoint> GetTrackedKeyPointsUn();
 

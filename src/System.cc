@@ -494,4 +494,9 @@ void System::setFrameCount(const int& frameCount)
     mpFrameDrawer->setFrameCount(frameCount);
 }
 
+void System::ignoreFPS(const bool& ignore)
+{
+    mpViewer->ignoreFPS(ignore);
+}
+
 } //namespace ORB_SLAM

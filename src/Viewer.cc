@@ -30,6 +30,7 @@ namespace ORB_SLAM2
 Viewer::Viewer(System* pSystem, FrameDrawer *pFrameDrawer, MapDrawer *pMapDrawer, Tracking *pTracking, const string &strSettingPath):
     mpSystem(pSystem), mpFrameDrawer(pFrameDrawer),mpMapDrawer(pMapDrawer), mpTracker(pTracking),
     mbFinishRequested(false), mbFinished(true), mbStopped(true), mbStopRequested(false)
+    , mIgnoreFPS(false)
 {
     cv::FileStorage fSettings(strSettingPath, cv::FileStorage::READ);
 
@@ -288,7 +289,7 @@ void Viewer::Run()
 
         cv::Mat im = mpFrameDrawer->DrawFrame();
         cv::imshow("ORB-SLAM2: Current Frame",im);
-        cv::waitKey(mT);
+        mIgnoreFPS ? cv::waitKey(1) : cv::waitKey(mT);
 
         if(menuReset)
         {
@@ -382,6 +383,11 @@ void Viewer::Release()
 {
     unique_lock<mutex> lock(mMutexStop);
     mbStopped = false;
+}
+
+void Viewer::ignoreFPS(const bool& ignore)
+{
+    mIgnoreFPS = ignore;
 }
 
 }

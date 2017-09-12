@@ -40,6 +40,16 @@ FrameDrawer::FrameDrawer(Map* pMap)
 
 cv::Mat FrameDrawer::DrawFrame()
 {
+    // If there was no update yet simply return the lastFrame
+    // avoids redrawing the same frame over and over
+    if(!mWasUpdated && !mLastIm.empty())
+    {
+        // DLOG(WARNING) << "FPS set higher than tracking can compute the frames";
+        return mLastIm;
+    }
+
+    mFrameCounter++;
+
     cv::Mat im;
     vector<cv::KeyPoint> vIniKeys; // Initialization: KeyPoints in reference frame
     vector<int> vMatches; // Initialization: correspondeces with reference keypoints
@@ -47,7 +57,6 @@ cv::Mat FrameDrawer::DrawFrame()
     vector<bool> vbVO, vbMap; // Tracked MapPoints in current frame
     int state; // Tracking state
 
-    mFrameCounter++;
 
     //Copy variables within scoped mutex
     {
@@ -151,6 +160,9 @@ cv::Mat FrameDrawer::DrawFrame()
     cv::Mat imWithInfo;
     DrawTextInfo(im,state, imWithInfo);
 
+    mWasUpdated = false;
+    mLastIm = imWithInfo;
+
     return imWithInfo;
 }
 
@@ -231,6 +243,7 @@ void FrameDrawer::Update(Tracking *pTracker)
         }
     }
     mState=static_cast<int>(pTracker->mLastProcessedState);
+    mWasUpdated = true;
 }
 
 void FrameDrawer::setFrameCount(const int& frameCount)

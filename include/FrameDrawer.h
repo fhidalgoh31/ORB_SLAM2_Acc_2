@@ -56,6 +56,7 @@ protected:
 
     // Info of the frame to be drawn
     cv::Mat mIm;
+    cv::Mat mLastIm;
     int N;
     vector<cv::KeyPoint> mvCurrentKeys;
     vector<bool> mvbMap, mvbVO;
@@ -71,6 +72,7 @@ protected:
 
     int mFrameCounter;
     int mFrameCount;
+    bool mWasUpdated;
 };
 
 } //namespace ORB_SLAM
