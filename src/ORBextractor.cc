@@ -416,6 +416,7 @@ ORBextractor::ORBextractor(int _nfeatures, float _scaleFactor, int _nlevels,
     , nLevels("Num levels", _nlevels, 1, 18, (initialization ? ParameterGroup::INITIALIZATION : ParameterGroup::ORBEXTRACTOR))
     , iniThFAST("IniThFAST", _iniThFAST, 0, 50, (initialization ? ParameterGroup::INITIALIZATION : ParameterGroup::ORBEXTRACTOR))
     , minThFAST("MinThFAST", _minThFAST, 0, 100, (initialization ? ParameterGroup::INITIALIZATION : ParameterGroup::ORBEXTRACTOR))
+    , cellWidth("Cell width", 30, 10, 100, (initialization ? ParameterGroup::INITIALIZATION : ParameterGroup::ORBEXTRACTOR))
 {
     mvScaleFactor.resize(nLevels());
     mvLevelSigma2.resize(nLevels());
@@ -791,8 +792,6 @@ void ORBextractor::ComputeKeyPointsOctTree(vector<vector<KeyPoint> >& allKeypoin
 {
     allKeypoints.resize(nLevels());
 
-    const float W = 30; //param
-
     for (int level = 0; level < nLevels(); ++level)
     {
         const int minBorderX = EDGE_THRESHOLD-3; //param
@@ -806,8 +805,8 @@ void ORBextractor::ComputeKeyPointsOctTree(vector<vector<KeyPoint> >& allKeypoin
         const float width = (maxBorderX-minBorderX);
         const float height = (maxBorderY-minBorderY);
 
-        const int nCols = width/W;
-        const int nRows = height/W;
+        const int nCols = width/cellWidth();
+        const int nRows = height/cellWidth();
         const int wCell = ceil(width/nCols);
         const int hCell = ceil(height/nRows);
 

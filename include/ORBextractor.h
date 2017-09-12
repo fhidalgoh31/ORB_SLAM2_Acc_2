@@ -115,6 +115,7 @@ protected:
     Parameter<int> nLevels;
     Parameter<int> iniThFAST;
     Parameter<int> minThFAST;
+    Parameter<int> cellWidth;
 };
 
 } //namespace ORB_SLAM
