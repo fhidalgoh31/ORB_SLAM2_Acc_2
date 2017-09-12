@@ -5,7 +5,7 @@
 # this is very dirty code ... please dont take it as an example
 import cv2
 import argparse
-import yaml
+import re
 from copy import deepcopy
 
 boxes = []
@@ -21,12 +21,18 @@ ebox = None
 
 def save_boxes_to(boxes, output_yaml):
     with open(output_yaml, 'r') as yaml_file:
-        content = yaml.safe_load(yaml_file)
+        content = yaml_file.read()
+        # check if there are regions in the file already and erase them
+        # if necessary
+        matches = re.findall(r'ORBextractor.ExcludedRegions: .*', content)
+        if len(matches) > 0:
+            print("Substituting previous regions.")
+            content = re.sub(r'ORBextractor.ExcludedRegions: .*', '', content)
 
-    content["ORBextractor.ExcludedRegions"] = boxes
+    content += "ORBextractor.ExcludedRegions: {}".format(boxes)
 
     with open(output_yaml, 'w') as yaml_file:
-        yaml.safe_dump(content, yaml_file, default_flow_style=False)
+        yaml_file.write(content)
 
 
 def on_mouse(event, x, y, flags, params):
@@ -55,6 +61,14 @@ def on_mouse(event, x, y, flags, params):
         global img
         ebox = (x, y)
         box = [sbox[0], sbox[1], ebox[0], ebox[1]]
+
+        # sort the boxes so the first 2 ints are x,y of the upper left corner
+        # and the second 2 ints are x,y of the lower right corner
+        if box[0] > box[2]:
+            box[0], box[2] = box[2], box[0]
+        if box[1] > box[3]:
+            box[1], box[3] = box[3], box[1]
+
         boxes.append(box)
         img = deepcopy(changed_img)
         sbox = None
