@@ -93,7 +93,13 @@ public:
 protected:
 
     void ComputePyramid(cv::Mat image);
+
+    // Divides every image in the image pyramid into a grid of cells. Then calculates FAST corners
+    // in every cell. Will also try to distribute the calculated features as much as possible using
+    // DistributeOctTree.
     void ComputeKeyPointsOctTree(std::vector<std::vector<cv::KeyPoint> >& allKeypoints);
+
+    // Distributes features across the image
     std::vector<cv::KeyPoint> DistributeOctTree(const std::vector<cv::KeyPoint>& vToDistributeKeys, const int &minX,
                                            const int &maxX, const int &minY, const int &maxY, const int &nFeatures, const int &level);
 

@@ -569,7 +569,7 @@ vector<cv::KeyPoint> ORBextractor::DistributeOctTree(const vector<cv::KeyPoint>&
         vpIniNodes[i] = &lNodes.back();
     }
 
-    //Associate points to childs
+    //Associate points to children
     for(size_t i=0;i<vToDistributeKeys.size();i++)
     {
         const cv::KeyPoint &kp = vToDistributeKeys[i];
@@ -629,7 +629,7 @@ vector<cv::KeyPoint> ORBextractor::DistributeOctTree(const vector<cv::KeyPoint>&
                 ExtractorNode n1,n2,n3,n4;
                 lit->DivideNode(n1,n2,n3,n4);
 
-                // Add childs if they contain points
+                // Add children if they contain points
                 if(n1.vKeys.size()>0)
                 {
                     lNodes.push_front(n1);
@@ -782,7 +782,7 @@ vector<cv::KeyPoint> ORBextractor::DistributeOctTree(const vector<cv::KeyPoint>&
         vResultKeys.push_back(*pKP);
     }
 
-    // DLOG(INFO) << "Asked for " << N << " features and got " << vResultKeys.size();
+    DLOG(INFO) << "Asked for " << N << " features and got " << vResultKeys.size();
     return vResultKeys;
 }
 
@@ -792,6 +792,7 @@ void ORBextractor::ComputeKeyPointsOctTree(vector<vector<KeyPoint> >& allKeypoin
 
     for (int level = 0; level < nLevels(); ++level)
     {
+        // Determine the region of the image the features are going to be extracted in
         const int minBorderX = EDGE_THRESHOLD-3; //param
         const int minBorderY = minBorderX;
         const int maxBorderX = mvImagePyramid[level].cols-EDGE_THRESHOLD+3; //param
@@ -803,11 +804,13 @@ void ORBextractor::ComputeKeyPointsOctTree(vector<vector<KeyPoint> >& allKeypoin
         const float width = (maxBorderX-minBorderX);
         const float height = (maxBorderY-minBorderY);
 
+        // Determine the amount and dimension of the extraction cells
         const int nCols = width/cellWidth();
         const int nRows = height/cellWidth();
         const int wCell = ceil(width/nCols);
         const int hCell = ceil(height/nRows);
 
+        // move through all cells and do the extraction
         for(int i=0; i<nRows; i++)
         {
             const float iniY = minBorderY+i*hCell;
@@ -832,13 +835,16 @@ void ORBextractor::ComputeKeyPointsOctTree(vector<vector<KeyPoint> >& allKeypoin
                 // DLOG(INFO) << "Actual cell position y: " << iniY << "-" << maxY;
                 // DLOG(INFO) << "Actual cell position x: " << iniX << "-" << maxX;
 
-
+                // extract FAST corners
                 vector<cv::KeyPoint> vKeysCell;
                 FAST(mvImagePyramid[level].rowRange(iniY,maxY).colRange(iniX,maxX),
                      vKeysCell,iniThFAST(),true);
 
+                // if no FAST corners were extracted try again with a different threshold
                 if(vKeysCell.empty())
                 {
+                    DLOG_IF(INFO, visualizeExtractor()) << "Using lower FAST threshold for cell ("
+                            << i << ", " << j << ")" ;
                     FAST(mvImagePyramid[level].rowRange(iniY,maxY).colRange(iniX,maxX),
                          vKeysCell,minThFAST(),true);
                 }
@@ -861,6 +867,7 @@ void ORBextractor::ComputeKeyPointsOctTree(vector<vector<KeyPoint> >& allKeypoin
         vector<KeyPoint> & keypoints = allKeypoints[level];
         keypoints.reserve(nFeatures());
 
+        // Make sure features are equally distributed across the image
         keypoints = DistributeOctTree(vToDistributeKeys, minBorderX, maxBorderX,
                                       minBorderY, maxBorderY,mnFeaturesPerLevel[level], level);
 
@@ -1088,6 +1095,7 @@ void ORBextractor::operator()( InputArray _image, InputArray _mask, vector<KeyPo
 
     Mat descriptors;
 
+    // prepare variables
     int nkeypoints = 0;
     for (int level = 0; level < nLevels(); ++level)
         nkeypoints += (int)allKeypoints[level].size();
@@ -1132,6 +1140,8 @@ void ORBextractor::operator()( InputArray _image, InputArray _mask, vector<KeyPo
         // And add the keypoints to the output
         _keypoints.insert(_keypoints.end(), keypoints.begin(), keypoints.end());
     }
+
+    DLOG_IF(INFO, visualizeExtractor()) << _keypoints.size() << " features extracted.";
 
     if(visualizeExtractor())
     {
@@ -1221,6 +1231,8 @@ void ORBextractor::updateParameters()
 
 void ORBextractor::ComputePyramid(cv::Mat image)
 {
+    DLOG_IF(INFO, visualizeExtractor()) << "Creating image pyramid with: "
+            << nLevels() << " levels and scaleFactor = " << scaleFactor();
     for (int level = 0; level < nLevels(); ++level)
     {
         float scale = mvInvScaleFactor[level];
