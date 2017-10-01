@@ -223,6 +223,9 @@ cv::Mat System::TrackMonocular(const cv::Mat &im, const double &timestamp)
         exit(-1);
     }
 
+    //update parameters before next image is processed
+    ParameterManager::updateParameters();
+
     // Check mode change
     {
         unique_lock<mutex> lock(mMutexMode);

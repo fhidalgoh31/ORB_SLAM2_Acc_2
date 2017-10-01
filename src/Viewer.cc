@@ -314,8 +314,6 @@ void Viewer::Run()
             }
         }
 
-        ParameterManager::updateParameters();
-
         if(CheckFinish())
             break;
     }
