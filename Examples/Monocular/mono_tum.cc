@@ -20,6 +20,7 @@
 
 #include "Parameter.h"
 #include "System.h"
+#include "pangolin/pangolin.h"
 
 #include <iostream>
 #include <algorithm>
@@ -70,12 +71,9 @@ int main(int argc, char **argv)
     cout << "Images in the sequence: " << nImages << endl << endl;
 
     // Main loop
-    ORB_SLAM2::Parameter<bool> pause("Pause", false,  true,
-            ORB_SLAM2::ParameterGroup::VISUAL, []{});
-    ORB_SLAM2::Parameter<bool> nextFrame("Next frame", false, false,
-            ORB_SLAM2::ParameterGroup::VISUAL, []{});
-    ORB_SLAM2::Parameter<int> fastForward("Fast forward", 0,
-            ORB_SLAM2::ParameterGroup::VISUAL, []{});
+    pangolin::Var<bool> pause("visual_parameters.Pause", false,  true);
+    pangolin::Var<bool> nextFrame("visual_parameters.Next frame", false, false);
+    pangolin::Var<std::string> fastForward("visual_parameters.Fast forward", "0");
     int forwardCounter = 0;
     cv::Mat im;
     for(int ni=0; ni<nImages; ni++)
@@ -90,12 +88,13 @@ int main(int argc, char **argv)
                  << string(argv[3]) << "/" << vstrImageFilenames[ni] << endl;
             return 1;
         }
-        if(fastForward() != 0)
+        int fastForwardVar = std::stoi(fastForward.Get());
+        if(fastForwardVar != 0)
         {
-            LOG(INFO) << "Fast forwarding by " << fastForward() << " frames.";
+            LOG(INFO) << "Fast forwarding by " << fastForwardVar << " frames.";
             SLAM.ignoreFPS(true);
-            forwardCounter = fastForward();
-            fastForward.setValue(0);
+            forwardCounter = fastForwardVar;
+            fastForward.operator=("0");
         }
 
 #ifdef COMPILEDWITHC11
@@ -104,22 +103,17 @@ int main(int argc, char **argv)
         std::chrono::monotonic_clock::time_point t1 = std::chrono::monotonic_clock::now();
 #endif
         bool frame_played = false;
-        while(pause())
+        while(pause.Get())
         {
-            if(nextFrame())
+            if(nextFrame.Get())
             {
                 SLAM.TrackMonocular(im,tframe);
                 frame_played = true;
-                nextFrame.setValue(false);
-            }
-            if(frame_played)
-            {
+                nextFrame.operator=(false);
                 break;
             }
-            else
-            {
-                usleep(10000);
-            }
+
+            usleep(10000);
         }
         if(!frame_played)
         {
