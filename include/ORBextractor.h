@@ -86,7 +86,7 @@ public:
 
     // updates all parameters which are internally derived from the parameter objects below
     // (nFeatures, scaleFactor, etc.)
-    void updateParameters();
+    void UpdateParameters();
 
     std::vector<cv::Mat> mvImagePyramid;
 
