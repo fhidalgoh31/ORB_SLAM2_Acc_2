@@ -162,7 +162,6 @@ void Viewer::Run()
     }
 
     // parameter view shows buttons which open parameters for every subcategory
-    // //TODO : group them by module e.g. parameters.initialization
     auto& parameterPanel = pangolin::CreatePanel("parameters").SetBounds(0.0,1.0,0.0,pangolin::Attach::Pix(175));
     pangolin::Var<std::function<void(void)>> extractorButton("parameters.Extractor", toggleFunctionMap["extractor"]);
     pangolin::Var<std::function<void(void)>> initializationButton("parameters.Initialization", toggleFunctionMap["initialization"]);

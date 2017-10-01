@@ -34,8 +34,6 @@
 
 namespace ORB_SLAM2
 {
-//TODO : The size of the grid should depend on the image size, this way small images get very tiny
-//cells and large images very large cells
 #define FRAME_GRID_ROWS 48
 #define FRAME_GRID_COLS 64
 

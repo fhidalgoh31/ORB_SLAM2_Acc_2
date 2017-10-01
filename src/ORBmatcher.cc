@@ -487,7 +487,6 @@ int ORBmatcher::SearchForInitialization(Frame &F1, Frame &F2, vector<cv::Point2f
                     // sort the rotations into histogram bins according to their size
                     //TODO : Why is the HISTO_LENGTH 30 when there can only be 12 bins max?
                     int bin = round(rot*factor);
-                    // DLOG(INFO) << "Bin: " << bin;
                     if(bin==HISTO_LENGTH)
                         bin=0;
                     assert(bin>=0 && bin<HISTO_LENGTH);
