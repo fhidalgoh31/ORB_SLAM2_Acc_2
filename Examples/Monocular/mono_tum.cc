@@ -70,9 +70,12 @@ int main(int argc, char **argv)
     cout << "Images in the sequence: " << nImages << endl << endl;
 
     // Main loop
-    ORB_SLAM2::Parameter<bool> pause("Pause", false,  true, ORB_SLAM2::ParameterGroup::VISUAL);
-    ORB_SLAM2::Parameter<bool> nextFrame("Next frame", false, false, ORB_SLAM2::ParameterGroup::VISUAL);
-    ORB_SLAM2::Parameter<int> fastForward("Fast forward", 0, ORB_SLAM2::ParameterGroup::VISUAL);
+    ORB_SLAM2::Parameter<bool> pause("Pause", false,  true,
+            ORB_SLAM2::ParameterGroup::VISUAL, []{});
+    ORB_SLAM2::Parameter<bool> nextFrame("Next frame", false, false,
+            ORB_SLAM2::ParameterGroup::VISUAL, []{});
+    ORB_SLAM2::Parameter<int> fastForward("Fast forward", 0,
+            ORB_SLAM2::ParameterGroup::VISUAL, []{});
     int forwardCounter = 0;
     cv::Mat im;
     for(int ni=0; ni<nImages; ni++)

@@ -27,6 +27,7 @@ enum class ParameterGroup
 class ParameterBase
 {
 protected:
+    friend class ParameterManager;
     enum ParameterCategory
     {
         MINMAX,
@@ -36,6 +37,7 @@ protected:
     };
 
     static std::map<ParameterGroup, std::map<std::string, ParameterBase*> > parametersMap;
+    virtual void onUpdate() const {};
 
 public:
     virtual ~ParameterBase(){};
@@ -62,13 +64,14 @@ public:
 
     // if toggle is set to false this will create a button, otherwise a switch
     Parameter(const std::string& name, const bool& value, const bool& toggle,
-              const ParameterGroup& group)
+            const ParameterGroup& group, std::function<void(void)> onUpdateCallback)
         : mCategory(ParameterCategory::BOOL)
         , mMinValue(0)
         , mMaxValue(toggle)
         , mValue(value)
         , mName(name)
         , mGroup(group)
+        , mOnUpdateCallback(onUpdateCallback)
     {
         std::map<std::string, ParameterBase*>::iterator found_it = parametersMap[group].find(name);
         if(found_it != parametersMap[group].end())
@@ -79,13 +82,15 @@ public:
     }
 
     Parameter(const std::string& name, const T& value, const T& minValue,
-              const T& maxValue, const ParameterGroup& group)
+            const T& maxValue, const ParameterGroup& group,
+            std::function<void(void)> onUpdateCallback)
         : mCategory(ParameterCategory::MINMAX)
         , mMinValue(minValue)
         , mMaxValue(maxValue)
         , mValue(value)
         , mName(name)
         , mGroup(group)
+        , mOnUpdateCallback(onUpdateCallback)
     {
         std::map<std::string, ParameterBase*>::iterator found_it = parametersMap[group].find(name);
         if(found_it != parametersMap[group].end())
@@ -95,13 +100,15 @@ public:
         parametersMap[group][name] = this;
     }
 
-    Parameter(const std::string& name, const T& value, const ParameterGroup& group)
+    Parameter(const std::string& name, const T& value, const ParameterGroup& group,
+            std::function<void(void)> onUpdateCallback)
         : mCategory(ParameterCategory::TEXTINPUT)
         , mMinValue(0)
         , mMaxValue(0)
         , mValue(value)
         , mName(name)
         , mGroup(group)
+        , mOnUpdateCallback(onUpdateCallback)
     {
         std::map<std::string, ParameterBase*>::iterator found_it = parametersMap[group].find(name);
         if(found_it != parametersMap[group].end())
@@ -151,12 +158,14 @@ protected:
     virtual const ParameterGroup getGroup() const override { return mGroup; };
     virtual const ParameterVariant getVariant() const override { return mValue; }; // cannot return a const ref because implicitly casted
     virtual void setValueInternal(const T& value) override { mValue = value; };
+    virtual void onUpdate() const override { mOnUpdateCallback(); };
 
     T mValue;
     std::string mName;
     ParameterGroup mGroup;
     bool mChangedThroughPangolin;
     bool mChangedInCode;
+    std::function<void(void)> mOnUpdateCallback;
 };
 
 
@@ -263,12 +272,14 @@ private:
                 pango_var->operator=(std::to_string(param_value));
                 static_cast<Parameter<T>* >(param)->mChangedInCode = false;
                 DLOG(INFO) << "Parameter value of " << param->getName() <<" is: " << param_value;
+                param->onUpdate();
             }
             else if(pango_var_value != param_value)
             {
                 param->setValueInternal(pango_var_value);
                 static_cast<Parameter<T>* >(param)->mChangedThroughPangolin = true;
                 DLOG(INFO) << "Parameter value of " << param->getName() <<" is: " << param_value;
+                param->onUpdate();
             }
         }
         else
@@ -289,6 +300,7 @@ private:
                     static_cast<Parameter<T>* >(param)->mChangedThroughPangolin = true;
                     DLOG(INFO) << "Parameter value of " << param->getName() <<" is: " << param_value;
                 }
+                param->onUpdate();
             }
         }
     }

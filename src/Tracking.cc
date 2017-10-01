@@ -49,7 +49,7 @@ Tracking::Tracking(System *pSys, ORBVocabulary* pVoc, FrameDrawer *pFrameDrawer,
     mpKeyFrameDB(pKFDB), mpInitializer(static_cast<Initializer*>(NULL)), mpSystem(pSys), mpViewer(NULL),
     mpFrameDrawer(pFrameDrawer), mpMapDrawer(pMapDrawer), mpMap(pMap), mnLastRelocFrameId(0)
     , mfSettings(strSettingPath, cv::FileStorage::READ)
-    , mnMinMatchesForTracking("Min matches", 15, 0, 500, ParameterGroup::TRACKING)
+    , mnMinMatchesForTracking("Min matches", 15, 0, 500, ParameterGroup::TRACKING, []{})
 {
     // Load camera parameters from settings file
 
@@ -259,12 +259,10 @@ cv::Mat Tracking::GrabImageMonocular(const cv::Mat &im, const double &timestamp)
 
     if(mState==NOT_INITIALIZED || mState==NO_IMAGES_YET)
     {
-        mpIniORBextractor->updateParameters(); //update parameters if they changed
         mCurrentFrame = Frame(mImGray,timestamp,mpIniORBextractor,mpORBVocabulary,mK,mDistCoef,mbf,mThDepth);
     }
     else
     {
-        mpORBextractorLeft->updateParameters(); //update parameter if they changed
         mCurrentFrame = Frame(mImGray,timestamp,mpORBextractorLeft,mpORBVocabulary,mK,mDistCoef,mbf,mThDepth);
     }
 

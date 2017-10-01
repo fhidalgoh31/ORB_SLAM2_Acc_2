@@ -410,13 +410,26 @@ static int bit_pattern_31_[256*4] =
 
 ORBextractor::ORBextractor(int _nfeatures, float _scaleFactor, int _nlevels,
          int _iniThFAST, int _minThFAST, bool initialization)
-    : visualizeExtractor("Extractor", false, false, (initialization ? ParameterGroup::UNDEFINED : ParameterGroup::VISUAL))
-    , nFeatures("Num features", _nfeatures, 0, 5000, (initialization ? ParameterGroup::INITIALIZATION : ParameterGroup::ORBEXTRACTOR))
-    , scaleFactor("Scale factor", _scaleFactor, 1.001, 1.5, (initialization ? ParameterGroup::INITIALIZATION : ParameterGroup::ORBEXTRACTOR))
-    , nLevels("Num levels", _nlevels, 1, 18, (initialization ? ParameterGroup::INITIALIZATION : ParameterGroup::ORBEXTRACTOR))
-    , iniThFAST("IniThFAST", _iniThFAST, 0, 50, (initialization ? ParameterGroup::INITIALIZATION : ParameterGroup::ORBEXTRACTOR))
-    , minThFAST("MinThFAST", _minThFAST, 0, 100, (initialization ? ParameterGroup::INITIALIZATION : ParameterGroup::ORBEXTRACTOR))
-    , cellWidth("Cell width", 30, 10, 100, (initialization ? ParameterGroup::INITIALIZATION : ParameterGroup::ORBEXTRACTOR))
+    : visualizeExtractor("Extractor", false, false,
+            (initialization ? ParameterGroup::UNDEFINED : ParameterGroup::VISUAL), []{})
+    , nFeatures("Num features", _nfeatures, 0, 5000,
+            (initialization ? ParameterGroup::INITIALIZATION : ParameterGroup::ORBEXTRACTOR),
+            [&]{updateParameters();})
+    , scaleFactor("Scale factor", _scaleFactor, 1.001, 1.5,
+            (initialization ? ParameterGroup::INITIALIZATION : ParameterGroup::ORBEXTRACTOR),
+            [&]{updateParameters();})
+    , nLevels("Num levels", _nlevels, 1, 18,
+            (initialization ? ParameterGroup::INITIALIZATION : ParameterGroup::ORBEXTRACTOR),
+            [&]{updateParameters();})
+    , iniThFAST("IniThFAST", _iniThFAST, 0, 50,
+            (initialization ? ParameterGroup::INITIALIZATION : ParameterGroup::ORBEXTRACTOR),
+            [&]{updateParameters();})
+    , minThFAST("MinThFAST", _minThFAST, 0, 100,
+            (initialization ? ParameterGroup::INITIALIZATION : ParameterGroup::ORBEXTRACTOR),
+            [&]{updateParameters();})
+    , cellWidth("Cell width", 30, 10, 100,
+            (initialization ? ParameterGroup::INITIALIZATION : ParameterGroup::ORBEXTRACTOR),
+            [&]{updateParameters();})
 {
     mvScaleFactor.resize(nLevels());
     mvLevelSigma2.resize(nLevels());
@@ -1151,81 +1164,70 @@ void ORBextractor::operator()( InputArray _image, InputArray _mask, vector<KeyPo
     }
 }
 
-void ORBextractor::updateParameters()
+void ORBextractor::UpdateParameters()
 {
-    //if any parameter changed reset all internally derived members
-    if(
-        nFeatures.checkAndResetIfChanged() ||
-        scaleFactor.checkAndResetIfChanged() ||
-        nLevels.checkAndResetIfChanged() ||
-        iniThFAST.checkAndResetIfChanged() ||
-        minThFAST.checkAndResetIfChanged()
-      )
+    mvScaleFactor.clear();
+    mvLevelSigma2.clear();
+    mvInvScaleFactor.clear();
+    mvInvLevelSigma2.clear();
+    mvImagePyramid.clear();
+    mnFeaturesPerLevel.clear();
+    umax.clear();
+
+    mvScaleFactor.resize(nLevels());
+    mvLevelSigma2.resize(nLevels());
+    mvScaleFactor[0]=1.0f;
+    mvLevelSigma2[0]=1.0f;
+    for(int i=1; i<nLevels(); i++)
     {
-        DLOG_IF(INFO, visualizeExtractor()) << "Updating parameters";
-        mvScaleFactor.clear();
-        mvLevelSigma2.clear();
-        mvInvScaleFactor.clear();
-        mvInvLevelSigma2.clear();
-        mvImagePyramid.clear();
-        mnFeaturesPerLevel.clear();
-        umax.clear();
+        mvScaleFactor[i]=mvScaleFactor[i-1]*scaleFactor();
+        mvLevelSigma2[i]=mvScaleFactor[i]*mvScaleFactor[i];
+    }
 
-        mvScaleFactor.resize(nLevels());
-        mvLevelSigma2.resize(nLevels());
-        mvScaleFactor[0]=1.0f;
-        mvLevelSigma2[0]=1.0f;
-        for(int i=1; i<nLevels(); i++)
-        {
-            mvScaleFactor[i]=mvScaleFactor[i-1]*scaleFactor();
-            mvLevelSigma2[i]=mvScaleFactor[i]*mvScaleFactor[i];
-        }
+    mvInvScaleFactor.resize(nLevels());
+    mvInvLevelSigma2.resize(nLevels());
+    for(int i=0; i<nLevels(); i++)
+    {
+        mvInvScaleFactor[i]=1.0f/mvScaleFactor[i];
+        mvInvLevelSigma2[i]=1.0f/mvLevelSigma2[i];
+    }
 
-        mvInvScaleFactor.resize(nLevels());
-        mvInvLevelSigma2.resize(nLevels());
-        for(int i=0; i<nLevels(); i++)
-        {
-            mvInvScaleFactor[i]=1.0f/mvScaleFactor[i];
-            mvInvLevelSigma2[i]=1.0f/mvLevelSigma2[i];
-        }
+    mvImagePyramid.resize(nLevels());
 
-        mvImagePyramid.resize(nLevels());
+    mnFeaturesPerLevel.resize(nLevels());
+    float factor = 1.0f / scaleFactor();
+    float nDesiredFeaturesPerScale = nFeatures()*(1 - factor)/(1 - (float)pow((double)factor, (double)nLevels()));
 
-        mnFeaturesPerLevel.resize(nLevels());
-        float factor = 1.0f / scaleFactor();
-        float nDesiredFeaturesPerScale = nFeatures()*(1 - factor)/(1 - (float)pow((double)factor, (double)nLevels()));
+    int sumFeatures = 0;
+    for( int level = 0; level < nLevels()-1; level++ )
+    {
+        mnFeaturesPerLevel[level] = cvRound(nDesiredFeaturesPerScale);
+        sumFeatures += mnFeaturesPerLevel[level];
+        nDesiredFeaturesPerScale *= factor;
+    }
+    mnFeaturesPerLevel[nLevels()-1] = std::max(nFeatures() - sumFeatures, 0);
 
-        int sumFeatures = 0;
-        for( int level = 0; level < nLevels()-1; level++ )
-        {
-            mnFeaturesPerLevel[level] = cvRound(nDesiredFeaturesPerScale);
-            sumFeatures += mnFeaturesPerLevel[level];
-            nDesiredFeaturesPerScale *= factor;
-        }
-        mnFeaturesPerLevel[nLevels()-1] = std::max(nFeatures() - sumFeatures, 0);
+    const int npoints = 512;
+    const Point* pattern0 = (const Point*)bit_pattern_31_;
+    std::copy(pattern0, pattern0 + npoints, std::back_inserter(pattern));
 
-        const int npoints = 512;
-        const Point* pattern0 = (const Point*)bit_pattern_31_;
-        std::copy(pattern0, pattern0 + npoints, std::back_inserter(pattern));
+    //This is for orientation
+    // pre-compute the end of a row in a circular patch
+    umax.resize(HALF_PATCH_SIZE + 1); //param
 
-        //This is for orientation
-        // pre-compute the end of a row in a circular patch
-        umax.resize(HALF_PATCH_SIZE + 1); //param
+    int v, v0, vmax = cvFloor(HALF_PATCH_SIZE * sqrt(2.f) / 2 + 1);
+    int vmin = cvCeil(HALF_PATCH_SIZE * sqrt(2.f) / 2);
+    const double hp2 = HALF_PATCH_SIZE*HALF_PATCH_SIZE;
+    for (v = 0; v <= vmax; ++v)
+        umax[v] = cvRound(sqrt(hp2 - v * v));
 
-        int v, v0, vmax = cvFloor(HALF_PATCH_SIZE * sqrt(2.f) / 2 + 1);
-        int vmin = cvCeil(HALF_PATCH_SIZE * sqrt(2.f) / 2);
-        const double hp2 = HALF_PATCH_SIZE*HALF_PATCH_SIZE;
-        for (v = 0; v <= vmax; ++v)
-            umax[v] = cvRound(sqrt(hp2 - v * v));
-
-        // Make sure we are symmetric
-        for (v = HALF_PATCH_SIZE, v0 = 0; v >= vmin; --v)
-        {
-            while (umax[v0] == umax[v0 + 1])
-                ++v0;
-            umax[v] = v0;
+    // Make sure we are symmetric
+    for (v = HALF_PATCH_SIZE, v0 = 0; v >= vmin; --v)
+    {
+        while (umax[v0] == umax[v0 + 1])
             ++v0;
-        }
+        umax[v] = v0;
+        ++v0;
     }
 }
 
