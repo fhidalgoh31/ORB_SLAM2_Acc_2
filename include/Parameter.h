@@ -118,7 +118,7 @@ public:
     };
 
     const T& getValue() const { return mValue; };
-    virtual void setValue(const T& value) { mValue = value; mChangedExternally = true; };
+    virtual void setValue(const T& value) { mValue = value; mChangedInCode = true; };
     const bool checkAndResetIfChanged()
     {
         if(mChangedThroughPangolin)
@@ -156,7 +156,7 @@ protected:
     std::string mName;
     ParameterGroup mGroup;
     bool mChangedThroughPangolin;
-    bool mChangedExternally;
+    bool mChangedInCode;
 };
 
 
@@ -258,10 +258,10 @@ private:
             auto& pango_var = boost::get<pangolin::Var<std::string>* >(pango_var_variant);
             T pango_var_value = boost::lexical_cast<T>(pango_var->Get());
 
-            if(static_cast<Parameter<T>* >(param)->mChangedExternally)
+            if(static_cast<Parameter<T>* >(param)->mChangedInCode)
             {
                 pango_var->operator=(std::to_string(param_value));
-                static_cast<Parameter<T>* >(param)->mChangedExternally = false;
+                static_cast<Parameter<T>* >(param)->mChangedInCode = false;
                 DLOG(INFO) << "Parameter value of " << param->getName() <<" is: " << param_value;
             }
             else if(pango_var_value != param_value)
@@ -277,10 +277,10 @@ private:
 
             if(pango_var->Get() != param_value)
             {
-                if(static_cast<Parameter<T>* >(param)->mChangedExternally)
+                if(static_cast<Parameter<T>* >(param)->mChangedInCode)
                 {
                     pango_var->operator=(param_value);
-                    static_cast<Parameter<T>* >(param)->mChangedExternally = false;
+                    static_cast<Parameter<T>* >(param)->mChangedInCode = false;
                     DLOG(INFO) << "Parameter value of " << param->getName() <<" is: " << param_value;
                 }
                 else
