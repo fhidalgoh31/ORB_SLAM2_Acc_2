@@ -269,6 +269,8 @@ private:
 
             if(static_cast<Parameter<T>* >(param)->mChangedInCode)
             {
+                // When the parameter value was changed from inside the code
+                // adjust the gui variable to show the updated value
                 pango_var->operator=(std::to_string(param_value));
                 static_cast<Parameter<T>* >(param)->mChangedInCode = false;
                 DLOG(INFO) << "Parameter value of " << param->getName() <<" is: " << param_value;
@@ -276,6 +278,8 @@ private:
             }
             else if(pango_var_value != param_value)
             {
+                // When the pangolin var value was changed via the user
+                // adjust the parameter to the desired value
                 param->setValueInternal(pango_var_value);
                 static_cast<Parameter<T>* >(param)->mChangedThroughPangolin = true;
                 DLOG(INFO) << "Parameter value of " << param->getName() <<" is: " << param_value;
@@ -290,12 +294,16 @@ private:
             {
                 if(static_cast<Parameter<T>* >(param)->mChangedInCode)
                 {
+                    // When the parameter value was changed from inside the code
+                    // adjust the gui variable to show the updated value
                     pango_var->operator=(param_value);
                     static_cast<Parameter<T>* >(param)->mChangedInCode = false;
                     DLOG(INFO) << "Parameter value of " << param->getName() <<" is: " << param_value;
                 }
                 else
                 {
+                    // When the pangolin var value was changed via the user
+                    // adjust the parameter to the desired value
                     param->setValueInternal(pango_var->Get());
                     static_cast<Parameter<T>* >(param)->mChangedThroughPangolin = true;
                     DLOG(INFO) << "Parameter value of " << param->getName() <<" is: " << param_value;
