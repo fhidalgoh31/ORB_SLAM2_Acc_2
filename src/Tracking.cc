@@ -50,6 +50,7 @@ Tracking::Tracking(System *pSys, ORBVocabulary* pVoc, FrameDrawer *pFrameDrawer,
     mpFrameDrawer(pFrameDrawer), mpMapDrawer(pMapDrawer), mpMap(pMap), mnLastRelocFrameId(0)
     , mfSettings(strSettingPath, cv::FileStorage::READ)
     , mnMinMatchesForTracking("Min matches", 15, 0, 500, ParameterGroup::TRACKING, []{})
+    , mVisualizeTracking("Show Tracking", false, true, ParameterGroup::VISUAL, []{})
 {
     // Load camera parameters from settings file
 

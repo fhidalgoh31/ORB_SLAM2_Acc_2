@@ -219,6 +219,7 @@ protected:
     //minimum amount of matches between frames in order to keep tracking
     cv::FileStorage mfSettings;
     Parameter<int> mnMinMatchesForTracking;
+    Parameter<bool> mVisualizeTracking;
 };
 
 } //namespace ORB_SLAM
