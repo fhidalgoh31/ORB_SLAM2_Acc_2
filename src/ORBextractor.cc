@@ -414,7 +414,7 @@ static int bit_pattern_31_[256*4] =
 
 ORBextractor::ORBextractor(int _nfeatures, float _scaleFactor, int _nlevels,
          int _iniThFAST, int _minThFAST, bool initialization)
-    : visualizeExtractor("Visualize extraction", false, true,
+    : visualizeExtractor("Show Extraction", false, true,
             (initialization ? ParameterGroup::UNDEFINED : ParameterGroup::VISUAL), []{})
     , nFeatures("Num features", _nfeatures, 0, 5000,
             (initialization ? ParameterGroup::INITIALIZATION : ParameterGroup::ORBEXTRACTOR),
@@ -1104,7 +1104,7 @@ void ORBextractor::operator()( InputArray _image, InputArray _mask, vector<KeyPo
     assert(image.type() == CV_8UC1 );
 
     auto visualizeParam = ParameterManager::getParameter<bool>(ParameterGroup::VISUAL,
-                                                               "Visualize extraction");
+                                                               "Show extraction");
     if(visualizeParam)
     {
         if(visualizeParam->getValue())
