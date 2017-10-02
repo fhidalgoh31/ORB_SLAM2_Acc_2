@@ -232,6 +232,31 @@ public:
         }
     }
 
+    template<typename T>
+    static Parameter<T>* getParameter(ParameterGroup group, const std::string& name)
+    {
+        ParameterDictionary::iterator found_group_it = parametersDict.find(group);
+        if(found_group_it != parametersDict.end())
+        {
+            std::map<std::string, ParameterBase*>::iterator it = parametersDict[group].find(name);
+            if(it != parametersDict[group].end())
+            {
+                auto& param = it->second;
+                return static_cast<Parameter<T>* >(param);
+            }
+            else
+            {
+                DLOG(WARNING) << "Looking for a parameter which doesn't exist: " << name;
+                return nullptr;
+            }
+        }
+        else
+        {
+            DLOG(WARNING) << "Looking for a group which doesn't have any parameters: " << &group;
+            return nullptr;
+        }
+    }
+
 private:
 
     template<typename T>
