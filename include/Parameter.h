@@ -36,7 +36,7 @@ protected:
         UNDEFINED
     };
 
-    static std::map<ParameterGroup, std::map<std::string, ParameterBase*> > parametersMap;
+    static std::map<ParameterGroup, std::map<std::string, ParameterBase*> > parametersDict;
     virtual void onUpdate() const {};
 
 public:
@@ -53,6 +53,8 @@ public:
     virtual const ParameterGroup getGroup() const { return ParameterGroup::UNDEFINED; };
 };
 
+
+typedef std::map<ParameterGroup, std::map<std::string, ParameterBase*> > ParameterDictionary;
 
 //TODO : add comments!
 template <typename T>
@@ -73,12 +75,12 @@ public:
         , mGroup(group)
         , mOnUpdateCallback(onUpdateCallback)
     {
-        std::map<std::string, ParameterBase*>::iterator found_it = parametersMap[group].find(name);
-        if(found_it != parametersMap[group].end())
+        std::map<std::string, ParameterBase*>::iterator found_it = parametersDict[group].find(name);
+        if(found_it != parametersDict[group].end())
         {
             LOG(WARNING) << "Duplicate parameter: " << name;
         }
-        parametersMap[group][name] = this;
+        parametersDict[group][name] = this;
     }
 
     Parameter(const std::string& name, const T& value, const T& minValue,
@@ -92,12 +94,12 @@ public:
         , mGroup(group)
         , mOnUpdateCallback(onUpdateCallback)
     {
-        std::map<std::string, ParameterBase*>::iterator found_it = parametersMap[group].find(name);
-        if(found_it != parametersMap[group].end())
+        std::map<std::string, ParameterBase*>::iterator found_it = parametersDict[group].find(name);
+        if(found_it != parametersDict[group].end())
         {
             LOG(WARNING) << "Duplicate parameter: " << name;
         }
-        parametersMap[group][name] = this;
+        parametersDict[group][name] = this;
     }
 
     Parameter(const std::string& name, const T& value, const ParameterGroup& group,
@@ -110,18 +112,18 @@ public:
         , mGroup(group)
         , mOnUpdateCallback(onUpdateCallback)
     {
-        std::map<std::string, ParameterBase*>::iterator found_it = parametersMap[group].find(name);
-        if(found_it != parametersMap[group].end())
+        std::map<std::string, ParameterBase*>::iterator found_it = parametersDict[group].find(name);
+        if(found_it != parametersDict[group].end())
         {
             LOG(WARNING) << "Duplicate parameter: " << name;
         }
-        parametersMap[group][name] = this;
+        parametersDict[group][name] = this;
     }
 
     virtual ~Parameter()
     {
         LOG(WARNING) << "Parameter being deleted: " << mName;
-        parametersMap[mGroup][mName] = nullptr;
+        parametersDict[mGroup][mName] = nullptr;
     };
 
     const T& getValue() const { return mValue; };
@@ -178,7 +180,7 @@ public:
 
     static void createPangolinEntries(const std::string& panel_name, ParameterGroup target_group)
     {
-        for(std::map<std::string, ParameterBase*>::iterator it = parametersMap[target_group].begin(); it != parametersMap[target_group].end(); it++)
+        for(std::map<std::string, ParameterBase*>::iterator it = parametersDict[target_group].begin(); it != parametersDict[target_group].end(); it++)
         {
             auto& param = it->second;
             switch (param->getVariant().which())
