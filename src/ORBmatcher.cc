@@ -35,8 +35,8 @@ using namespace std;
 namespace ORB_SLAM2
 {
 
-const int ORBmatcher::TH_HIGH = 100; //param
-const int ORBmatcher::TH_LOW = 50; //param
+const int ORBmatcher::TH_HIGH = 100; //param //descriptor distance for when a match is accepted as such
+const int ORBmatcher::TH_LOW = 50; //param //descriptor distance for when a match is accepted as such
 const int ORBmatcher::HISTO_LENGTH = 30; //param
 
 ORBmatcher::ORBmatcher(float nnratio, bool checkOri): mfNNratio(nnratio), mbCheckOrientation(checkOri)
@@ -1398,6 +1398,8 @@ int ORBmatcher::SearchByProjection(Frame &CurrentFrame, const Frame &LastFrame, 
 
                 vector<size_t> vIndices2;
 
+                // depending on whether moving foward or backward searching in different
+                // scale levels of the scale pyramid makes more sense
                 if(bForward)
                     vIndices2 = CurrentFrame.GetFeaturesInArea(u,v, radius, nLastOctave);
                 else if(bBackward)
