@@ -9,8 +9,6 @@
 
 namespace ORB_SLAM2 {
 
-typedef boost::variant<bool, int, float, double> ParameterVariant;
-
 enum class ParameterGroup
 {
     GENERAL,
@@ -23,6 +21,8 @@ enum class ParameterGroup
     LOOP_CLOSING,
     UNDEFINED
 };
+
+typedef boost::variant<bool, int, float, double> ParameterVariant;
 
 class ParameterBase
 {
@@ -38,14 +38,14 @@ protected:
 
     static std::map<ParameterGroup, std::map<std::string, ParameterBase*> > parametersDict;
     virtual void onUpdate() const {};
+    virtual void setValueInternal(const bool& value){};
+    virtual void setValueInternal(const int& value){};
+    virtual void setValueInternal(const float& value){};
+    virtual void setValueInternal(const double& value){};
 
 public:
     virtual ~ParameterBase(){};
     virtual const ParameterVariant getVariant() const { return 0.0; };
-    virtual void setValueInternal(const bool& value){} ;
-    virtual void setValueInternal(const int& value){} ;
-    virtual void setValueInternal(const float& value){} ;
-    virtual void setValueInternal(const double& value){} ;
     virtual const ParameterVariant getMinValue() const { return 0.0; };
     virtual const ParameterVariant getMaxValue() const { return 0.0; };
     virtual const ParameterCategory getCategory() const { return ParameterCategory::UNDEFINED; };
@@ -175,8 +175,12 @@ class ParameterManager : public ParameterBase
 {
 public:
 
-    typedef boost::variant<pangolin::Var<bool>*, pangolin::Var<int>*, pangolin::Var<float>*, pangolin::Var<double>*, pangolin::Var<std::string>* > PangolinVariants;
-    typedef std::map<ParameterGroup, std::map<std::string, std::pair<ParameterBase*, PangolinVariants>>> ParameterPairMap;
+    typedef boost::variant<pangolin::Var<bool>*, pangolin::Var<int>*, pangolin::Var<float>*,
+            pangolin::Var<double>*, pangolin::Var<std::string>* > PangolinVariants;
+
+    typedef std::map<ParameterGroup, std::map<std::string,
+            std::pair<ParameterBase*, PangolinVariants>>> ParameterPairMap;
+
 
     static void createPangolinEntries(const std::string& panel_name, ParameterGroup target_group)
     {
