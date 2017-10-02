@@ -71,7 +71,7 @@ using namespace std;
 namespace ORB_SLAM2
 {
 
-const int PATCH_SIZE = 31; //param
+const int PATCH_SIZE = 31; //param used for calculating BRIEF descriptor (see paper on ORB)
 const int HALF_PATCH_SIZE = 15; //param
 const int EDGE_THRESHOLD = 19; //param
 
@@ -148,6 +148,10 @@ static void computeOrbDescriptor(const KeyPoint& kpt,
 }
 
 
+// This is the rBRIEF pattern for extracting test points from image patches,
+// it is rotated by the orientation of extracted FAST corners which results in
+// the descriptor ORB uses.
+// This is taken from the OpenCV implementation
 static int bit_pattern_31_[256*4] =
 {
     8,-3, 9,5/*mean (0), correlation (0)*/,
@@ -470,7 +474,7 @@ ORBextractor::ORBextractor(int _nfeatures, float _scaleFactor, int _nlevels,
 
     //This is for orientation
     // pre-compute the end of a row in a circular patch
-    umax.resize(HALF_PATCH_SIZE + 1); //param
+    umax.resize(HALF_PATCH_SIZE + 1);
 
     int v, v0, vmax = cvFloor(HALF_PATCH_SIZE * sqrt(2.f) / 2 + 1);
     int vmin = cvCeil(HALF_PATCH_SIZE * sqrt(2.f) / 2);
@@ -795,7 +799,7 @@ vector<cv::KeyPoint> ORBextractor::DistributeOctTree(const vector<cv::KeyPoint>&
         vResultKeys.push_back(*pKP);
     }
 
-    DLOG(INFO) << "Asked for " << N << " features and got " << vResultKeys.size();
+    // DLOG(INFO) << "Asked for " << N << " features and got " << vResultKeys.size();
     return vResultKeys;
 }
 
