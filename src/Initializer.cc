@@ -533,8 +533,9 @@ bool Initializer::ReconstructF(vector<bool> &vbMatchesInliers, cv::Mat &F21, cv:
     // If there is not a clear winner or not enough triangulated points reject initialization
     if(maxGood<nMinGood || nsimilar>1) //param
     {
-        DLOG_IF(INFO, visualizeInitialization()) << "Initialization failed because no hypotheses was clearly better than the others.";
-        DLOG_IF(INFO, visualizeInitialization()) << "maxGood<nMinGood || nsimilar>1: " << maxGood << ">" << nMinGood
+        DLOG_IF(INFO, visualizeInitialization()) << "Initialization failed because no hypotheses was \
+            clearly better than the others or not achieved minimum amount of points triangulated.";
+        DLOG_IF(INFO, visualizeInitialization()) << "maxGood<nMinGood || nsimilar>1: " << maxGood << "<" << nMinGood
                       << " || " << nsimilar << ">1";
         return false;
     }
@@ -757,7 +758,7 @@ bool Initializer::ReconstructH(vector<bool> &vbMatchesInliers, cv::Mat &H21, cv:
         return true;
     }
 
-    DLOG_IF(INFO, visualizeInitialization()) << "Initialization failed because quality of reconstruction was too low.";
+    DLOG_IF(INFO, visualizeInitialization()) << "Initialization failed because quality of motion hypothesis was too low.";
     DLOG_IF(INFO, visualizeInitialization()) << "Causes are marked by a \"1\": "
         << "\n    Best not 0.75 times better than second best: " << (secondBestGood<0.75*bestGood)
                   << ", -> secondBestGood = " << secondBestGood << ", bestGood = "        << bestGood
