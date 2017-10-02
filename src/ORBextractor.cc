@@ -410,26 +410,26 @@ static int bit_pattern_31_[256*4] =
 
 ORBextractor::ORBextractor(int _nfeatures, float _scaleFactor, int _nlevels,
          int _iniThFAST, int _minThFAST, bool initialization)
-    : visualizeExtractor("Extractor", false, false,
+    : visualizeExtractor("Visualize extraction", false, true,
             (initialization ? ParameterGroup::UNDEFINED : ParameterGroup::VISUAL), []{})
     , nFeatures("Num features", _nfeatures, 0, 5000,
             (initialization ? ParameterGroup::INITIALIZATION : ParameterGroup::ORBEXTRACTOR),
-            [&]{updateParameters();})
+            [&]{UpdateParameters();})
     , scaleFactor("Scale factor", _scaleFactor, 1.001, 1.5,
             (initialization ? ParameterGroup::INITIALIZATION : ParameterGroup::ORBEXTRACTOR),
-            [&]{updateParameters();})
+            [&]{UpdateParameters();})
     , nLevels("Num levels", _nlevels, 1, 18,
             (initialization ? ParameterGroup::INITIALIZATION : ParameterGroup::ORBEXTRACTOR),
-            [&]{updateParameters();})
+            [&]{UpdateParameters();})
     , iniThFAST("IniThFAST", _iniThFAST, 0, 50,
             (initialization ? ParameterGroup::INITIALIZATION : ParameterGroup::ORBEXTRACTOR),
-            [&]{updateParameters();})
+            [&]{UpdateParameters();})
     , minThFAST("MinThFAST", _minThFAST, 0, 100,
             (initialization ? ParameterGroup::INITIALIZATION : ParameterGroup::ORBEXTRACTOR),
-            [&]{updateParameters();})
+            [&]{UpdateParameters();})
     , cellWidth("Cell width", 30, 10, 100,
             (initialization ? ParameterGroup::INITIALIZATION : ParameterGroup::ORBEXTRACTOR),
-            [&]{updateParameters();})
+            [&]{UpdateParameters();})
 {
     mvScaleFactor.resize(nLevels());
     mvLevelSigma2.resize(nLevels());
@@ -856,7 +856,7 @@ void ORBextractor::ComputeKeyPointsOctTree(vector<vector<KeyPoint> >& allKeypoin
                 // if no FAST corners were extracted try again with a different threshold
                 if(vKeysCell.empty())
                 {
-                    DLOG_IF(INFO, visualizeExtractor()) << "Using lower FAST threshold for cell ("
+                    DLOG_IF(INFO, mVisualizationActive) << "Using lower FAST threshold for cell ("
                             << i << ", " << j << ")" ;
                     FAST(mvImagePyramid[level].rowRange(iniY,maxY).colRange(iniX,maxX),
                          vKeysCell,minThFAST(),true);
@@ -1099,6 +1099,20 @@ void ORBextractor::operator()( InputArray _image, InputArray _mask, vector<KeyPo
     Mat image = _image.getMat();
     assert(image.type() == CV_8UC1 );
 
+    auto visualizeParam = ParameterManager::getParameter<bool>(ParameterGroup::VISUAL,
+                                                               "Visualize extraction");
+    if(visualizeParam)
+    {
+        if(visualizeParam->getValue())
+        {
+            mVisualizationActive = true;
+        }
+        else
+        {
+            mVisualizationActive = false;
+        }
+    }
+
     // Pre-compute the scale pyramid
     ComputePyramid(image);
 
@@ -1154,10 +1168,14 @@ void ORBextractor::operator()( InputArray _image, InputArray _mask, vector<KeyPo
         _keypoints.insert(_keypoints.end(), keypoints.begin(), keypoints.end());
     }
 
-    DLOG_IF(INFO, visualizeExtractor()) << _keypoints.size() << " features extracted.";
+    DLOG_IF(INFO, mVisualizationActive) << _keypoints.size() << " features extracted.";
 
-    if(visualizeExtractor())
+    if(mVisualizationActive)
     {
+        // convert to color for drawing
+        if(image.channels()<3)
+            cvtColor(image,image,CV_GRAY2BGR);
+        DrawDebugImage(image, _keypoints);
         cv::namedWindow("ORBExtractor", cv::WINDOW_NORMAL);
         cv::imshow("ORBExtractor", image);
         cv::waitKey(1);
@@ -1233,7 +1251,7 @@ void ORBextractor::UpdateParameters()
 
 void ORBextractor::ComputePyramid(cv::Mat image)
 {
-    DLOG_IF(INFO, visualizeExtractor()) << "Creating image pyramid with: "
+    DLOG_IF(INFO, mVisualizationActive) << "Creating image pyramid with: "
             << nLevels() << " levels and scaleFactor = " << scaleFactor();
     for (int level = 0; level < nLevels(); ++level)
     {
@@ -1258,6 +1276,22 @@ void ORBextractor::ComputePyramid(cv::Mat image)
         }
     }
 
+}
+
+void ORBextractor::DrawDebugImage(cv::Mat& image, std::vector<cv::KeyPoint> keypoints)
+{
+    const float r = 5;
+    // draw all found points even if not initialized
+    for (int i = 0; i < keypoints.size(); i++) {
+          // cv::rectangle(im,pt1,pt2,cv::Scalar(0,0,255));
+          cv::Point2f pt1,pt2;
+          pt1.x=keypoints[i].pt.x-r;
+          pt1.y=keypoints[i].pt.y-r;
+          pt2.x=keypoints[i].pt.x+r;
+          pt2.y=keypoints[i].pt.y+r;
+
+          cv::circle(image,keypoints[i].pt,2,cv::Scalar(0,0,255),-1);
+    }
 }
 
 } //namespace ORB_SLAM

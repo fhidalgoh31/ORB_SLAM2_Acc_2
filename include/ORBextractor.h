@@ -104,6 +104,9 @@ protected:
                                            const int &maxX, const int &minY, const int &maxY, const int &nFeatures, const int &level);
 
     void ComputeKeyPointsOld(std::vector<std::vector<cv::KeyPoint> >& allKeypoints);
+
+    void DrawDebugImage(cv::Mat& image, std::vector<cv::KeyPoint> keypoints);
+
     std::vector<cv::Point> pattern;
 
     std::vector<int> mnFeaturesPerLevel;
@@ -114,6 +117,8 @@ protected:
     std::vector<float> mvInvScaleFactor;
     std::vector<float> mvLevelSigma2;
     std::vector<float> mvInvLevelSigma2;
+
+    bool mVisualizationActive = false;
 
     Parameter<bool> visualizeExtractor;
     Parameter<int> nFeatures;
