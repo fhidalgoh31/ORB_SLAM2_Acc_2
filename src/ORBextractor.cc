@@ -1104,7 +1104,7 @@ void ORBextractor::operator()( InputArray _image, InputArray _mask, vector<KeyPo
     assert(image.type() == CV_8UC1 );
 
     auto visualizeParam = ParameterManager::getParameter<bool>(ParameterGroup::VISUAL,
-                                                               "Show extraction");
+                                                               "Show Extraction");
     if(visualizeParam)
     {
         if(visualizeParam->getValue())
