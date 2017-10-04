@@ -39,6 +39,8 @@ const int ORBmatcher::TH_HIGH = 100; //param //descriptor distance for when a ma
 const int ORBmatcher::TH_LOW = 50; //param //descriptor distance for when a match is accepted as such
 const int ORBmatcher::HISTO_LENGTH = 30; //param
 
+//TODO : This really shouldn't be a class, there is no point that an object of this is created
+// evereywhere we want to use one of it's functions, simply use static functions
 ORBmatcher::ORBmatcher(float nnratio, bool checkOri): mfNNratio(nnratio), mbCheckOrientation(checkOri)
 {
 }
