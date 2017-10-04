@@ -1444,8 +1444,11 @@ bool Tracking::Relocalization()
     vector<KeyFrame*> vpCandidateKFs = mpKeyFrameDB->DetectRelocalizationCandidates(&mCurrentFrame);
 
     if(vpCandidateKFs.empty())
-        DLOG(INFO) << "Relocalization impossible, database returned no candidates.";
+    {
+        DLOG_IF(INFO, mVisualizeRelocalization()) << "Relocalization impossible, database returned "
+            << "no candidates.";
         return false;
+    }
 
     const int nKFs = vpCandidateKFs.size();
 
