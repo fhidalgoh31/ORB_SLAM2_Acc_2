@@ -303,8 +303,6 @@ void Tracking::Track()
         // System is initialized. Track Frame.
         bool bOK;
 
-        DLOG_IF(INFO, mVisualizeTracking()) << "=================================================="
-                                            << " START OF TRACKING FOR NEW FRAME";
         if(mVisualizeTracking())
         {
             mnAmountTrackedMapPoints = 0;
@@ -326,6 +324,8 @@ void Tracking::Track()
 
             if(mState==OK)
             {
+                DLOG_IF(INFO, mVisualizeTracking()) << "==========================================="
+                                                    << " START OF TRACKING FOR NEW FRAME";
                 // Local Mapping might have changed some MapPoints tracked in last frame
                 CheckReplacedInLastFrame();
 
