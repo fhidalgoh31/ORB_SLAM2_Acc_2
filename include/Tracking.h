@@ -216,8 +216,11 @@ protected:
 
     list<MapPoint*> mlpTemporalPoints;
 
-    //minimum amount of matches between frames in order to keep tracking
     cv::FileStorage mfSettings;
+
+    int mnAmountTrackedMapPoints;
+    int mnAmountTrackedMapPointsKF;
+    //minimum amount of matches between frames in order to keep tracking
     Parameter<int> mnMinMatchesForTracking;
     Parameter<bool> mVisualizeTracking;
 };

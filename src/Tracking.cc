@@ -49,6 +49,8 @@ Tracking::Tracking(System *pSys, ORBVocabulary* pVoc, FrameDrawer *pFrameDrawer,
     mpKeyFrameDB(pKFDB), mpInitializer(static_cast<Initializer*>(NULL)), mpSystem(pSys), mpViewer(NULL),
     mpFrameDrawer(pFrameDrawer), mpMapDrawer(pMapDrawer), mpMap(pMap), mnLastRelocFrameId(0)
     , mfSettings(strSettingPath, cv::FileStorage::READ)
+    , mnAmountTrackedMapPoints(0)
+    , mnAmountTrackedMapPointsKF(0)
     , mnMinMatchesForTracking("Min matches", 15, 0, 500, ParameterGroup::TRACKING, []{})
     , mVisualizeTracking("Show Tracking", false, true, ParameterGroup::VISUAL, []{})
 {
@@ -301,6 +303,21 @@ void Tracking::Track()
         // System is initialized. Track Frame.
         bool bOK;
 
+        DLOG_IF(INFO, mVisualizeTracking()) << "=================================================="
+                                            << " START OF TRACKING FOR NEW FRAME";
+        if(mVisualizeTracking())
+        {
+            mnAmountTrackedMapPoints = 0;
+            mnAmountTrackedMapPointsKF = mpReferenceKF->GetMapPointMatches().size();
+            for(auto& mapPoint : mLastFrame.mvpMapPoints)
+            {
+                if(mapPoint)
+                {
+                    mnAmountTrackedMapPoints++;
+                }
+            }
+        }
+
         // Initial camera pose estimation using motion model or relocalization (if tracking is lost)
         if(!mbOnlyTracking)
         {
@@ -314,10 +331,12 @@ void Tracking::Track()
 
                 if(mVelocity.empty() || mCurrentFrame.mnId<mnLastRelocFrameId+2)
                 {
+                    DLOG_IF(INFO, mVisualizeTracking()) << "Tracking NOT using motion model.";
                     bOK = TrackReferenceKeyFrame();
                 }
                 else
                 {
+                    DLOG_IF(INFO, mVisualizeTracking()) << "Tracking using motion model.";
                     bOK = TrackWithMotionModel();
                     if(!bOK)
                         bOK = TrackReferenceKeyFrame();
@@ -344,10 +363,12 @@ void Tracking::Track()
 
                     if(!mVelocity.empty())
                     {
+                        DLOG_IF(INFO, mVisualizeTracking()) << "Tracking using motion model.";
                         bOK = TrackWithMotionModel();
                     }
                     else
                     {
+                        DLOG_IF(INFO, mVisualizeTracking()) << "Tracking NOT using motion model.";
                         bOK = TrackReferenceKeyFrame();
                     }
                 }
@@ -366,6 +387,7 @@ void Tracking::Track()
                     cv::Mat TcwMM;
                     if(!mVelocity.empty())
                     {
+                        DLOG_IF(INFO, mVisualizeTracking()) << "Tracking using motion model.";
                         bOKMM = TrackWithMotionModel();
                         vpMPsMM = mCurrentFrame.mvpMapPoints;
                         vbOutMM = mCurrentFrame.mvbOutlier;
@@ -463,6 +485,7 @@ void Tracking::Track()
 
             // Check if we need to insert a new keyframe
             if(NeedNewKeyFrame())
+                DLOG_IF(INFO, mVisualizeTracking()) << "This frame is going to be a new keyframe!";
                 CreateNewKeyFrame();
 
             // We allow points with high innovation (considererd outliers by the Huber Function)
@@ -479,7 +502,7 @@ void Tracking::Track()
         // Reset if the camera get lost soon after initialization
         if(mState==LOST)
         {
-            if(mpMap->KeyFramesInMap()<=5)
+            if(mpMap->KeyFramesInMap()<=5) //param
             {
                 cout << "Track lost soon after initialisation, reseting..." << endl;
                 mpSystem->Reset();
@@ -780,12 +803,20 @@ bool Tracking::TrackReferenceKeyFrame()
 
     int nmatches = matcher.SearchByBoW(mpReferenceKF,mCurrentFrame,vpMapPointMatches);
 
-    if(nmatches<15) //param
+    DLOG_IF(INFO, mVisualizeTracking()) << "Matched " << nmatches << "/" << mnAmountTrackedMapPointsKF
+                                        << " map points between last and current frame using BoW";
+
+    if(nmatches<mnMinMatchesForTracking()) //param
+    {
+        DLOG_IF(INFO, mVisualizeTracking()) << "Tracking failed, " << mnMinMatchesForTracking()
+            << " matches needed.";
         return false;
+    }
 
     mCurrentFrame.mvpMapPoints = vpMapPointMatches;
     mCurrentFrame.SetPose(mLastFrame.mTcw);
 
+    DLOG_IF(INFO, mVisualizeTracking()) << "Optimizing pose based on matched points.";
     Optimizer::PoseOptimization(&mCurrentFrame);
 
     // Discard outliers
@@ -808,7 +839,10 @@ bool Tracking::TrackReferenceKeyFrame()
                 nmatchesMap++;
         }
     }
+    DLOG_IF(INFO, mVisualizeTracking()) << nmatchesMap << " matches remaining after optimization.";
 
+    DLOG_IF(INFO, mVisualizeTracking() && nmatchesMap<10) << "Tracking failed, at least 10 needed.";
+    DLOG_IF(INFO, mVisualizeTracking() && nmatchesMap<10) << "Triggering Relocalization";
     return nmatchesMap>=10; //param
 }
 
@@ -898,17 +932,30 @@ bool Tracking::TrackWithMotionModel()
         th=7; //param
     int nmatches = matcher.SearchByProjection(mCurrentFrame,mLastFrame,th,mSensor==System::MONOCULAR);
 
+    DLOG_IF(INFO, mVisualizeTracking()) << "Matched " << nmatches << "/" << mnAmountTrackedMapPoints
+                                        << " map points between last and current frame";
+
     // If few matches, uses a wider window search
     if(nmatches<20) //param
     {
+        //TODO : Couldn't we just use a wider window if we do it anyway when it fails?
+        // Suppose it makes sure that if there are enough high quality matches to only take those...
+        DLOG_IF(INFO, mVisualizeTracking()) << "That wasn't enough need at least 20, lookin again "
+                                            << "in larger area";
         fill(mCurrentFrame.mvpMapPoints.begin(),mCurrentFrame.mvpMapPoints.end(),static_cast<MapPoint*>(NULL));
         nmatches = matcher.SearchByProjection(mCurrentFrame,mLastFrame,2*th,mSensor==System::MONOCULAR); //param
+        DLOG_IF(INFO, mVisualizeTracking()) << "Matched " << nmatches << " this time.";
     }
 
-    if(nmatches<mnMinMatchesForTracking.getValue()) //param
+    if(nmatches<mnMinMatchesForTracking()) //param
+    {
+        DLOG_IF(INFO, mVisualizeTracking()) << "Tracking failed, " << mnMinMatchesForTracking()
+                                            << " matches needed.";
         return false;
+    }
 
     // Optimize frame pose with all matches
+    DLOG_IF(INFO, mVisualizeTracking()) << "Optimizing pose based on matched points.";
     Optimizer::PoseOptimization(&mCurrentFrame);
 
     // Discard outliers
@@ -931,6 +978,7 @@ bool Tracking::TrackWithMotionModel()
                 nmatchesMap++;
         }
     }
+    DLOG_IF(INFO, mVisualizeTracking()) << nmatchesMap << " matches remaining after optimization.";
 
     if(mbOnlyTracking)
     {
@@ -938,6 +986,7 @@ bool Tracking::TrackWithMotionModel()
         return nmatches>20; //param
     }
 
+    DLOG_IF(INFO, mVisualizeTracking() && nmatchesMap<10) << "Tracking failed, at least 10 needed.";
     return nmatchesMap>=10; //param
 }
 
@@ -946,11 +995,15 @@ bool Tracking::TrackLocalMap()
     // We have an estimation of the camera pose and some map points tracked in the frame.
     // We retrieve the local map and try to find matches to points in the local map.
 
+    DLOG_IF(INFO, mVisualizeTracking()) << "Updating local map.";
     UpdateLocalMap();
 
+    DLOG_IF(INFO, mVisualizeTracking()) << "Searching for more points of the local map which are "
+                                        << "visible form the current frame.";
     SearchLocalPoints();
 
     // Optimize Pose
+    DLOG_IF(INFO, mVisualizeTracking()) << "Optimizing pose with all new found matches.";
     Optimizer::PoseOptimization(&mCurrentFrame);
     mnMatchesInliers = 0;
 
@@ -979,12 +1032,24 @@ bool Tracking::TrackLocalMap()
     // Decide if the tracking was succesful
     // More restrictive if there was a relocalization recently
     if(mCurrentFrame.mnId<mnLastRelocFrameId+mMaxFrames && mnMatchesInliers<50) //param
+    {
+        DLOG_IF(INFO, mVisualizeTracking()) << "Tracking failed because relocalized within the "
+            << "last second and only " << mnMatchesInliers << " matches considered to be inliers.";
         return false;
+    }
 
     if(mnMatchesInliers<30) //param
+    {
+        DLOG_IF(INFO, mVisualizeTracking()) << "Tracking failed because only " << mnMatchesInliers
+            << " matches were considered to be inliers.";
         return false;
+    }
     else
+    {
+        DLOG_IF(INFO, mVisualizeTracking()) << mnMatchesInliers << " points tracked in "
+            << "local map after optimization.";
         return true;
+    }
 }
 
 
@@ -1061,10 +1126,16 @@ bool Tracking::NeedNewKeyFrame()
             mpLocalMapper->InterruptBA();
             if(mSensor!=System::MONOCULAR)
             {
-                if(mpLocalMapper->KeyframesInQueue()<3)
+                if(mpLocalMapper->KeyframesInQueue()<3) //param
+                {
                     return true;
+                }
                 else
+                {
+                    DLOG_IF(INFO, mVisualizeTracking()) << "Couldn't insert keyframe, too many in "
+                        << "local mapping queue already";
                     return false;
+                }
             }
             else
                 return false;
@@ -1157,6 +1228,7 @@ void Tracking::CreateNewKeyFrame()
 void Tracking::SearchLocalPoints()
 {
     // // Do not search map points already matched
+    int nExistingMatches = 0;
     for(vector<MapPoint*>::iterator vit=mCurrentFrame.mvpMapPoints.begin(), vend=mCurrentFrame.mvpMapPoints.end(); vit!=vend; vit++)
     {
         MapPoint* pMP = *vit;
@@ -1171,6 +1243,7 @@ void Tracking::SearchLocalPoints()
                 pMP->IncreaseVisible();
                 pMP->mnLastFrameSeen = mCurrentFrame.mnId;
                 pMP->mbTrackInView = false;
+                nExistingMatches++;
             }
         }
     }
@@ -1192,7 +1265,10 @@ void Tracking::SearchLocalPoints()
             nToMatch++;
         }
     }
+    DLOG_IF(INFO, mVisualizeTracking()) << "Now trying to match " << nToMatch << " map points which"
+                                        << " should be visible from the current frame.";
 
+    int nMatchesFound = 0;
     if(nToMatch>0)
     {
         ORBmatcher matcher(0.8); //param
@@ -1202,8 +1278,12 @@ void Tracking::SearchLocalPoints()
         // If the camera has been relocalised recently, perform a coarser search
         if(mCurrentFrame.mnId<mnLastRelocFrameId+2)
             th=5; //param
-        matcher.SearchByProjection(mCurrentFrame,mvpLocalMapPoints,th);
+        nMatchesFound = matcher.SearchByProjection(mCurrentFrame,mvpLocalMapPoints,th);
     }
+    DLOG_IF(INFO, mVisualizeTracking()) << "Found matches for " << nMatchesFound << "/" << nToMatch
+                                        << " of them.";
+    DLOG_IF(INFO, mVisualizeTracking()) << "Total matches between map points and features in current"
+        << " frame:" << nMatchesFound + nExistingMatches;
 }
 
 void Tracking::UpdateLocalMap() //param
