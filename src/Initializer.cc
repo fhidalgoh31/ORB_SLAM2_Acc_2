@@ -30,7 +30,7 @@
 namespace ORB_SLAM2
 {
 
-Parameter<bool> Initializer::visualizeInitialization("Initialization", false, false,
+Parameter<bool> Initializer::visualizeInitialization("Show Init.", false, true,
         ParameterGroup::VISUAL, []{});
 
 Initializer::Initializer(const Frame &ReferenceFrame, float sigma, int iterations)
@@ -119,12 +119,14 @@ bool Initializer::Initialize(const Frame &CurrentFrame, const vector<int> &vMatc
     // Try to reconstruct from homography or fundamental depending on the ratio (0.40-0.45)
     if(RH>0.40) //param
     {
-        DLOG_IF(INFO, visualizeInitialization()) << "Using homography for initialization. RH = " << RH;
+        DLOG_IF(INFO, visualizeInitialization()) << "Using homography for initialization. RH = "
+                                                 << RH;
         return ReconstructH(vbMatchesInliersH,H,mK,R21,t21,vP3D,vbTriangulated,1.0,50); //param
     }
     else //if(pF_HF>0.6)
     {
-        DLOG_IF(INFO, visualizeInitialization()) << "Using fundamental matrix for initialization. RH = " << RH;
+        DLOG_IF(INFO, visualizeInitialization()) << "Using fundamental matrix for initialization. "
+                                                 << "RH = " << RH;
         return ReconstructF(vbMatchesInliersF,F,mK,R21,t21,vP3D,vbTriangulated,1.0,50); //param
     }
 
@@ -533,10 +535,11 @@ bool Initializer::ReconstructF(vector<bool> &vbMatchesInliers, cv::Mat &F21, cv:
     // If there is not a clear winner or not enough triangulated points reject initialization
     if(maxGood<nMinGood || nsimilar>1) //param
     {
-        DLOG_IF(INFO, visualizeInitialization()) << "Initialization failed because no hypotheses was \
-            clearly better than the others or not achieved minimum amount of points triangulated.";
-        DLOG_IF(INFO, visualizeInitialization()) << "maxGood<nMinGood || nsimilar>1: " << maxGood << "<" << nMinGood
-                      << " || " << nsimilar << ">1";
+        DLOG_IF(INFO, visualizeInitialization()) << "Initialization failed because no hypotheses was"
+                                                 << "clearly better than the others or not"
+                                                 << " achieved minimum amount of points triangulated.";
+        DLOG_IF(INFO, visualizeInitialization()) << "maxGood<nMinGood || nsimilar>1: " << maxGood
+                                                 << "<" << nMinGood << " || " << nsimilar << ">1";
         return false;
     }
 
@@ -552,8 +555,10 @@ bool Initializer::ReconstructF(vector<bool> &vbMatchesInliers, cv::Mat &F21, cv:
             t1.copyTo(t21);
             return true;
         }
-        DLOG_IF(INFO, visualizeInitialization()) << "Initialization failed because there wasn't enough parallax.";
-        DLOG_IF(INFO, visualizeInitialization()) << "parallax1>minParallax: " << parallax1 << "<" << minParallax ;
+        DLOG_IF(INFO, visualizeInitialization()) << "Initialization failed because there wasn't"
+                                                 << " enough parallax.";
+        DLOG_IF(INFO, visualizeInitialization()) << "parallax1>minParallax: " << parallax1
+                                                 << "<" << minParallax ;
     }else if(maxGood==nGood2)
     {
         if(parallax2>minParallax) //param
@@ -565,8 +570,10 @@ bool Initializer::ReconstructF(vector<bool> &vbMatchesInliers, cv::Mat &F21, cv:
             t1.copyTo(t21);
             return true;
         }
-        DLOG_IF(INFO, visualizeInitialization()) << "Initialization failed because there wasn't enough parallax.";
-        DLOG_IF(INFO, visualizeInitialization()) << "parallax2>minParallax: " << parallax2 << "<" << minParallax ;
+        DLOG_IF(INFO, visualizeInitialization()) << "Initialization failed because there wasn't "
+                                                 << "enough parallax.";
+        DLOG_IF(INFO, visualizeInitialization()) << "parallax2>minParallax: " << parallax2
+                                                 << "<" << minParallax ;
     }else if(maxGood==nGood3)
     {
         if(parallax3>minParallax) //param
@@ -578,8 +585,10 @@ bool Initializer::ReconstructF(vector<bool> &vbMatchesInliers, cv::Mat &F21, cv:
             t2.copyTo(t21);
             return true;
         }
-        DLOG_IF(INFO, visualizeInitialization()) << "Initialization failed because there wasn't enough parallax.";
-        DLOG_IF(INFO, visualizeInitialization()) << "parallax3>minParallax: " << parallax3 << "<" << minParallax ;
+        DLOG_IF(INFO, visualizeInitialization()) << "Initialization failed because there wasn't "
+                                                 << "enough parallax.";
+        DLOG_IF(INFO, visualizeInitialization()) << "parallax3>minParallax: " << parallax3
+                                                 << "<" << minParallax ;
     }else if(maxGood==nGood4)
     {
         if(parallax4>minParallax) //param
@@ -591,8 +600,10 @@ bool Initializer::ReconstructF(vector<bool> &vbMatchesInliers, cv::Mat &F21, cv:
             t2.copyTo(t21);
             return true;
         }
-        DLOG_IF(INFO, visualizeInitialization()) << "Initialization failed because there wasn't enough parallax.";
-        DLOG_IF(INFO, visualizeInitialization()) << "parallax4>minParallax: " << parallax4 << "<" << minParallax ;
+        DLOG_IF(INFO, visualizeInitialization()) << "Initialization failed because there wasn't "
+                                                 << "enough parallax.";
+        DLOG_IF(INFO, visualizeInitialization()) << "parallax4>minParallax: " << parallax4
+                                                 << "<" << minParallax ;
     }
 
     return false;
