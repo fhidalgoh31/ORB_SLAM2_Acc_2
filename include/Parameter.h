@@ -291,7 +291,7 @@ private:
         // If the ParameterCategory is TEXTINPUT the pangolin::var needs to be cast
         // from a string to the type value holds in the parameter, this is done here
         // through a boost::lexical_cast. All other cases are managed by the else block
-        auto& param_value = boost::get<T>(param->getVariant());
+        T param_value = boost::get<T>(param->getVariant());
 
         if (param->getCategory() == ParameterCategory::TEXTINPUT)
         {
@@ -313,6 +313,7 @@ private:
                 // adjust the parameter to the desired value
                 param->setValueInternal(pango_var_value);
                 static_cast<Parameter<T>* >(param)->mChangedThroughPangolin = true;
+                param_value = boost::get<T>(param->getVariant());
                 DLOG(INFO) << "Parameter value of " << param->getName() <<" is: " << param_value;
                 param->onUpdate();
             }
@@ -337,6 +338,7 @@ private:
                     // adjust the parameter to the desired value
                     param->setValueInternal(pango_var->Get());
                     static_cast<Parameter<T>* >(param)->mChangedThroughPangolin = true;
+                    param_value = boost::get<T>(param->getVariant());
                     DLOG(INFO) << "Parameter value of " << param->getName() <<" is: " << param_value;
                 }
                 param->onUpdate();
