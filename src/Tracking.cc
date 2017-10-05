@@ -54,6 +54,7 @@ Tracking::Tracking(System *pSys, ORBVocabulary* pVoc, FrameDrawer *pFrameDrawer,
     , mnMinMatchesForTracking("Min matches", 15, 0, 500, ParameterGroup::TRACKING, []{})
     , mTriggerRelocalization("Trigger Relocalization", false, false, ParameterGroup::VISUAL, []{})
     , mVisualizeTracking("Show Tracking", false, true, ParameterGroup::VISUAL, []{})
+    , mVisualizeRelocalization("Show Relocalization", false, true, ParameterGroup::VISUAL, []{})
 {
     // Load camera parameters from settings file
 
@@ -307,12 +308,19 @@ void Tracking::Track()
         if(mVisualizeTracking())
         {
             mnAmountTrackedMapPoints = 0;
-            mnAmountTrackedMapPointsKF = mpReferenceKF->GetMapPointMatches().size();
+            mnAmountTrackedMapPointsKF = 0;
             for(auto& mapPoint : mLastFrame.mvpMapPoints)
             {
                 if(mapPoint)
                 {
                     mnAmountTrackedMapPoints++;
+                }
+            }
+            for(auto& mapPoint : mpReferenceKF->GetMapPointMatches())
+            {
+                if(mapPoint)
+                {
+                    mnAmountTrackedMapPointsKF++;
                 }
             }
         }
@@ -326,7 +334,7 @@ void Tracking::Track()
             if(mState==OK && !mTriggerRelocalization.checkAndResetIfChanged())
             {
                 DLOG_IF(INFO, mVisualizeTracking()) << "==========================================="
-                                                    << " START OF TRACKING FOR NEW FRAME";
+                                                    << " TRACKING";
                 // Local Mapping might have changed some MapPoints tracked in last frame
                 CheckReplacedInLastFrame();
 
@@ -1437,6 +1445,8 @@ void Tracking::UpdateLocalKeyFrames()
 
 bool Tracking::Relocalization()
 {
+    DLOG_IF(INFO, mVisualizeRelocalization()) << "+++++++++++++++++++++++++++++++++++++++++++"
+                                        << " RELOCALIZATION";
     // Compute Bag of Words Vector
     mCurrentFrame.ComputeBoW();
 
@@ -1447,11 +1457,12 @@ bool Tracking::Relocalization()
     if(vpCandidateKFs.empty())
     {
         DLOG_IF(INFO, mVisualizeRelocalization()) << "Relocalization impossible, database returned "
-            << "no candidates.";
+                                                  << "no candidates.";
         return false;
     }
 
     const int nKFs = vpCandidateKFs.size();
+    DLOG_IF(INFO, mVisualizeRelocalization()) << "Found " << nKFs << " candidates for relocalization";
 
     // We perform first an ORB matching with each candidate
     // If enough matches are found we setup a PnP solver
@@ -1467,6 +1478,7 @@ bool Tracking::Relocalization()
     vbDiscarded.resize(nKFs);
 
     int nCandidates=0;
+    int numMapPointsTrackedInCandidate = 0;
 
     //TODO : if last velocities were known this could check keyframes in an area
     //that increases with time relative to the last known velocity
@@ -1474,6 +1486,8 @@ bool Tracking::Relocalization()
     //heading info from imu would also help to exclude keyframes
 
     //search matches between the candidate keyframes' mappoints and current frames keypoints
+    //TODO : One could probably filter all candidates which track less than 50 map points, since in
+    // the end at lest 50 matches have to be found for relocalization anyway.
     for(int i=0; i<nKFs; i++)
     {
         KeyFrame* pKF = vpCandidateKFs[i];
@@ -1490,6 +1504,22 @@ bool Tracking::Relocalization()
             }
             else
             {
+                if(mVisualizeRelocalization())
+                {
+                    numMapPointsTrackedInCandidate = 0;
+                    for(auto& mapPoint : pKF->GetMapPointMatches())
+                    {
+                        if(mapPoint)
+                        {
+                            numMapPointsTrackedInCandidate++;
+                        }
+                    }
+                }
+                DLOG_IF(INFO, mVisualizeRelocalization()) << "Keyframe " << i << " accepted as "
+                                                          << "candidate, was able to match "
+                                                          << nmatches << "/"
+                                                          << numMapPointsTrackedInCandidate
+                                                          << " of it's" << " tracked map points.";
                 PnPsolver* pSolver = new PnPsolver(mCurrentFrame,vvpMapPointMatches[i]);
                 pSolver->SetRansacParameters(0.99,10,300,4,0.5,5.991); //param
                 vpPnPsolvers[i] = pSolver;
@@ -1497,6 +1527,8 @@ bool Tracking::Relocalization()
             }
         }
     }
+    DLOG_IF(INFO, mVisualizeRelocalization()) << nCandidates << "/" << nKFs << " had more than 15"
+                                              << " matches with current frame, rest discarded.";
 
     // Alternatively perform some iterations of P4P RANSAC
     // Until we found a camera pose supported by enough inliers
@@ -1587,7 +1619,8 @@ bool Tracking::Relocalization()
                 }
 
 
-                DLOG(INFO) << "Found " << nGood << " inliers.";
+                DLOG_IF(INFO, mVisualizeRelocalization()) << "Candidate " << i << " scored "
+                                                          << nGood << " matches.";
                 // If the pose is supported by enough inliers stop ransacs and continue
                 if(nGood>=50) //param
                 {
@@ -1600,12 +1633,13 @@ bool Tracking::Relocalization()
 
     if(!bMatch)
     {
-        DLOG(INFO) << "Relocalization impossible, not enough inlier map points found.";
+        DLOG_IF(INFO, mVisualizeRelocalization()) << "Relocalization failed, no candidate had"
+                                                  << " enough matches with current frame.";
         return false;
     }
     else
     {
-        DLOG(INFO) << "Relocalization successful";
+        DLOG_IF(INFO, mVisualizeRelocalization()) << "Relocalization successful.";
         mnLastRelocFrameId = mCurrentFrame.mnId;
         return true;
     }

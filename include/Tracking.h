@@ -222,7 +222,9 @@ protected:
     int mnAmountTrackedMapPointsKF;
     //minimum amount of matches between frames in order to keep tracking
     Parameter<int> mnMinMatchesForTracking;
+    Parameter<bool> mTriggerRelocalization;
     Parameter<bool> mVisualizeTracking;
+    Parameter<bool> mVisualizeRelocalization;
 };
 
 } //namespace ORB_SLAM
