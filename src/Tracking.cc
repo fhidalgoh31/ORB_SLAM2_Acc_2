@@ -52,6 +52,7 @@ Tracking::Tracking(System *pSys, ORBVocabulary* pVoc, FrameDrawer *pFrameDrawer,
     , mnAmountTrackedMapPoints(0)
     , mnAmountTrackedMapPointsKF(0)
     , mnMinMatchesForTracking("Min matches", 15, 0, 500, ParameterGroup::TRACKING, []{})
+    , mTriggerRelocalization("Trigger Relocalization", false, false, ParameterGroup::VISUAL, []{})
     , mVisualizeTracking("Show Tracking", false, true, ParameterGroup::VISUAL, []{})
 {
     // Load camera parameters from settings file
@@ -322,7 +323,7 @@ void Tracking::Track()
             // Local Mapping is activated. This is the normal behaviour, unless
             // you explicitly activate the "only tracking" mode.
 
-            if(mState==OK)
+            if(mState==OK && !mTriggerRelocalization.checkAndResetIfChanged())
             {
                 DLOG_IF(INFO, mVisualizeTracking()) << "==========================================="
                                                     << " START OF TRACKING FOR NEW FRAME";
