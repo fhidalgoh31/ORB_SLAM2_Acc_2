@@ -179,6 +179,14 @@ void Viewer::Run()
                                                                           parameterPanel.ToggleShow();
                                                                       });
 
+    // // open inidividual parameter pane when pressing Ctrl+letter
+    pangolin::RegisterKeyPressCallback(pangolin::PANGO_CTRL + 'a', toggleFunctionMap["extractor"]);
+    pangolin::RegisterKeyPressCallback(pangolin::PANGO_CTRL + 's', toggleFunctionMap["initialization"]);
+    pangolin::RegisterKeyPressCallback(pangolin::PANGO_CTRL + 'd', toggleFunctionMap["tracking"]);
+    pangolin::RegisterKeyPressCallback(pangolin::PANGO_CTRL + 'f', toggleFunctionMap["relocalization"]);
+    pangolin::RegisterKeyPressCallback(pangolin::PANGO_CTRL + 'g', toggleFunctionMap["localMapping"]);
+    pangolin::RegisterKeyPressCallback(pangolin::PANGO_CTRL + 'h', toggleFunctionMap["loopClosing"]);
+
     pangolin::OpenGlMatrix Twc;
     Twc.SetIdentity();
 
