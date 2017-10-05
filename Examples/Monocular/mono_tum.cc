@@ -71,9 +71,9 @@ int main(int argc, char **argv)
     cout << "Images in the sequence: " << nImages << endl << endl;
 
     // Main loop
-    pangolin::Var<bool> pause("visual_parameters.Pause", false,  true);
-    pangolin::Var<bool> nextFrame("visual_parameters.Next frame", false, false);
-    pangolin::Var<std::string> fastForward("visual_parameters.Fast forward", "0");
+    pangolin::Var<bool> pause("menu.Pause", false,  true);
+    pangolin::Var<bool> nextFrame("menu.Next frame", false, false);
+    pangolin::Var<std::string> fastForward("menu.Fast forward", "0");
     int forwardCounter = 0;
     cv::Mat im;
     for(int ni=0; ni<nImages; ni++)

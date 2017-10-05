@@ -86,6 +86,7 @@ void Viewer::Run()
     pangolin::Var<bool> menuShowGraph("menu.Show Graph",true,true);
     pangolin::Var<bool> menuLocalizationMode("menu.Localization Mode",false,true);
     pangolin::Var<bool> menuReset("menu.Reset",false,false);
+    ParameterManager::createPangolinEntries("menu", ParameterGroup::VISUAL);
 
     // create the panels for the sub parameters
     std::map<std::string, pangolin::View*> subPanels;
@@ -172,68 +173,11 @@ void Viewer::Run()
     ParameterManager::createPangolinEntries("parameters", ParameterGroup::GENERAL);
     parameterPanel.ToggleShow();
 
-    // visual parameters are activated via Ctrl+V, these allow to switch on/off which
-    // modules are visualized
-    auto& visualParameterPanel = pangolin::CreatePanel("visual_parameters").SetBounds(0.0,1.0,0.0,pangolin::Attach::Pix(200));
-    ParameterManager::createPangolinEntries("visual_parameters", ParameterGroup::VISUAL);
-    visualParameterPanel.ToggleShow();
-
     // open parameter pane when pressing Ctrl+p
     pangolin::RegisterKeyPressCallback(pangolin::PANGO_CTRL + 'p', [&]{
-            if(parameterPanel.IsShown())
-            {
-                if (!menuPanel.IsShown())
-                {
-                    menuPanel.ToggleShow();
-                }
-                if (visualParameterPanel.IsShown())
-                {
-                    visualParameterPanel.ToggleShow();
-                }
-                parameterPanel.ToggleShow();
-            }
-            else
-            {
-                if (menuPanel.IsShown())
-                {
-                    menuPanel.ToggleShow();
-                }
-                if (visualParameterPanel.IsShown())
-                {
-                    visualParameterPanel.ToggleShow();
-                }
-                parameterPanel.ToggleShow();
-            }
-            });
-
-    // open visual parameter pane when pressing Ctrl+v
-    pangolin::RegisterKeyPressCallback(pangolin::PANGO_CTRL + 'v', [&]{
-            if(visualParameterPanel.IsShown())
-            {
-                if (!menuPanel.IsShown())
-                {
-                    menuPanel.ToggleShow();
-                }
-                if (parameterPanel.IsShown())
-                {
-                    parameterPanel.ToggleShow();
-                }
-                visualParameterPanel.ToggleShow();
-            }
-            else
-            {
-                if (menuPanel.IsShown())
-                {
-                    menuPanel.ToggleShow();
-                }
-                if (parameterPanel.IsShown())
-                {
-                    parameterPanel.ToggleShow();
-                }
-                visualParameterPanel.ToggleShow();
-            }
-            });
-
+                                                                          menuPanel.ToggleShow();
+                                                                          parameterPanel.ToggleShow();
+                                                                      });
 
     pangolin::OpenGlMatrix Twc;
     Twc.SetIdentity();
