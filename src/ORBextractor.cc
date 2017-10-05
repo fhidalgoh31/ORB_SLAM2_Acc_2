@@ -807,6 +807,9 @@ void ORBextractor::ComputeKeyPointsOctTree(vector<vector<KeyPoint> >& allKeypoin
 {
     allKeypoints.resize(nLevels());
 
+    int numLowerThreshUsed = 0;
+    int numHigherThreshUsed = 0;
+
     for (int level = 0; level < nLevels(); ++level)
     {
         // Determine the region of the image the features are going to be extracted in
@@ -856,14 +859,15 @@ void ORBextractor::ComputeKeyPointsOctTree(vector<vector<KeyPoint> >& allKeypoin
                 vector<cv::KeyPoint> vKeysCell;
                 FAST(mvImagePyramid[level].rowRange(iniY,maxY).colRange(iniX,maxX),
                      vKeysCell,iniThFAST(),true);
+                numHigherThreshUsed++;
 
                 // if no FAST corners were extracted try again with a different threshold
                 if(vKeysCell.empty())
                 {
-                    DLOG_IF(INFO, mVisualizationActive) << "Using lower FAST threshold for cell ("
-                            << i << ", " << j << ")" ;
                     FAST(mvImagePyramid[level].rowRange(iniY,maxY).colRange(iniX,maxX),
                          vKeysCell,minThFAST(),true);
+                    numHigherThreshUsed--;
+                    numLowerThreshUsed++;
                 }
 
                 if(!vKeysCell.empty())
@@ -877,8 +881,17 @@ void ORBextractor::ComputeKeyPointsOctTree(vector<vector<KeyPoint> >& allKeypoin
                         // DLOG(INFO) << "Moved keypoint: x = " << (*vit).pt.x << ", y = " << (*vit).pt.y;
                     }
                 }
-
             }
+        }
+
+        if(visualizeExtractor())
+        {
+            int numCells = nRows * nCols;
+            DLOG(INFO) << "Level: " << level << " used higher threshold on: "
+                       << numHigherThreshUsed << "/" << numCells << " and lower threshold on: "
+                       << numLowerThreshUsed << "/" << numCells << " cells.";
+            numHigherThreshUsed = 0;
+            numLowerThreshUsed = 0;
         }
 
         vector<KeyPoint> & keypoints = allKeypoints[level];
