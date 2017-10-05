@@ -75,11 +75,11 @@ void Viewer::Run()
 
     // Add named OpenGL viewport to window and provide 3D Handler
     pangolin::View& d_cam = pangolin::CreateDisplay()
-            .SetBounds(0.0, 1.0, pangolin::Attach::Pix(175), 1.0, -1024.0f/768.0f)
+            .SetBounds(0.0, 1.0, pangolin::Attach::Pix(200), 1.0, -1024.0f/768.0f)
             .SetHandler(new pangolin::Handler3D(s_cam));
 
     // standart view by orb slam
-    auto& menuPanel = pangolin::CreatePanel("menu").SetBounds(0.0,1.0,0.0,pangolin::Attach::Pix(175));
+    auto& menuPanel = pangolin::CreatePanel("menu").SetBounds(0.0,1.0,0.0,pangolin::Attach::Pix(200));
     pangolin::Var<bool> menuFollowCamera("menu.Follow Camera",true,true);
     pangolin::Var<bool> menuShowPoints("menu.Show Points",true,true);
     pangolin::Var<bool> menuShowKeyFrames("menu.Show KeyFrames",true,true);
@@ -123,11 +123,11 @@ void Viewer::Run()
     auto toggleBoundsCamera = [&](bool showingParamPanel){
         if (!showingParamPanel)
         {
-            d_cam.SetBounds(0.0, 1.0, pangolin::Attach::Pix(175), 1.0, -1024.0f/768.0f);
+            d_cam.SetBounds(0.0, 1.0, pangolin::Attach::Pix(200), 1.0, -1024.0f/768.0f);
         }
         else
         {
-            d_cam.SetBounds(0.0, 1.0, pangolin::Attach::Pix(175), pangolin::Attach::Pix(-200), -1024.0f/768.0f);
+            d_cam.SetBounds(0.0, 1.0, pangolin::Attach::Pix(200), pangolin::Attach::Pix(-200), -1024.0f/768.0f);
         }
     };
 
@@ -162,7 +162,7 @@ void Viewer::Run()
     }
 
     // parameter view shows buttons which open parameters for every subcategory
-    auto& parameterPanel = pangolin::CreatePanel("parameters").SetBounds(0.0,1.0,0.0,pangolin::Attach::Pix(175));
+    auto& parameterPanel = pangolin::CreatePanel("parameters").SetBounds(0.0,1.0,0.0,pangolin::Attach::Pix(200));
     pangolin::Var<std::function<void(void)>> extractorButton("parameters.Extractor", toggleFunctionMap["extractor"]);
     pangolin::Var<std::function<void(void)>> initializationButton("parameters.Initialization", toggleFunctionMap["initialization"]);
     pangolin::Var<std::function<void(void)>> trackingButton("parameters.Tracking", toggleFunctionMap["tracking"]);
@@ -174,7 +174,7 @@ void Viewer::Run()
 
     // visual parameters are activated via Ctrl+V, these allow to switch on/off which
     // modules are visualized
-    auto& visualParameterPanel = pangolin::CreatePanel("visual_parameters").SetBounds(0.0,1.0,0.0,pangolin::Attach::Pix(175));
+    auto& visualParameterPanel = pangolin::CreatePanel("visual_parameters").SetBounds(0.0,1.0,0.0,pangolin::Attach::Pix(200));
     ParameterManager::createPangolinEntries("visual_parameters", ParameterGroup::VISUAL);
     visualParameterPanel.ToggleShow();
 
