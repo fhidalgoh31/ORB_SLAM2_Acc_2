@@ -165,8 +165,8 @@ protected:
     T mValue;
     std::string mName;
     ParameterGroup mGroup;
-    bool mChangedThroughPangolin;
-    bool mChangedInCode;
+    bool mChangedThroughPangolin = false;
+    bool mChangedInCode = false;
     std::function<void(void)> mOnUpdateCallback;
 };
 
