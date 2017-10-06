@@ -31,6 +31,7 @@ namespace ORB_SLAM2
 LocalMapping::LocalMapping(Map *pMap, const float bMonocular):
     mbMonocular(bMonocular), mbResetRequested(false), mbFinishRequested(false), mbFinished(true), mpMap(pMap),
     mbAbortBA(false), mbStopped(false), mbStopRequested(false), mbNotStop(false), mbAcceptKeyFrames(true)
+    , mVisualizeLocalMapping("Show Mapping", false, true, ParameterGroup::VISUAL, []{})
 {
 }
 
@@ -57,6 +58,9 @@ void LocalMapping::Run()
         // Check if there are keyframes in the queue
         if(CheckNewKeyFrames())
         {
+            DLOG_IF(INFO, mVisualizeLocalMapping()) << "###########################################"
+                                                    << " LOCAL MAPPING";
+            DLOG_IF(INFO, mVisualizeLocalMapping()) << mlNewKeyFrames.size() << " new keyframe(s).";
             // BoW conversion and insertion in Map
             ProcessNewKeyFrame();
 
@@ -78,6 +82,7 @@ void LocalMapping::Run()
             {
                 // Local BA
                 if(mpMap->KeyFramesInMap()>2)
+                    DLOG_IF(INFO, mVisualizeLocalMapping()) << "Performing local BA.";
                     Optimizer::LocalBundleAdjustment(mpCurrentKeyFrame,&mbAbortBA, mpMap);
 
                 // Check redundant local Keyframes
@@ -164,6 +169,7 @@ void LocalMapping::ProcessNewKeyFrame()
     mpCurrentKeyFrame->UpdateConnections();
 
     // Insert Keyframe in Map
+    DLOG_IF(INFO, mVisualizeLocalMapping()) << "Adding keyframe to local map.";
     mpMap->AddKeyFrame(mpCurrentKeyFrame);
 }
 
@@ -180,6 +186,10 @@ void LocalMapping::MapPointCulling()
         nThObs = 3; //param
     const int cnThObs = nThObs;
 
+    DLOG_IF(INFO, mVisualizeLocalMapping()) << "Checking whether map points can be deleted...";
+    int numRecentMapPoints = mlpRecentAddedMapPoints.size();
+    int numMapPointsCulled = 0;
+    int numMapPointsAddedPermanently = 0;
     while(lit!=mlpRecentAddedMapPoints.end())
     {
         MapPoint* pMP = *lit;
@@ -191,17 +201,28 @@ void LocalMapping::MapPointCulling()
         {
             pMP->SetBadFlag();
             lit = mlpRecentAddedMapPoints.erase(lit);
+            numMapPointsCulled++;
         }
         else if(((int)nCurrentKFid-(int)pMP->mnFirstKFid)>=2 && pMP->Observations()<=cnThObs) //param
         {
             pMP->SetBadFlag();
             lit = mlpRecentAddedMapPoints.erase(lit);
+            numMapPointsCulled++;
         }
         else if(((int)nCurrentKFid-(int)pMP->mnFirstKFid)>=3) //param
+        {
             lit = mlpRecentAddedMapPoints.erase(lit);
+            numMapPointsAddedPermanently++;
+        }
         else
             lit++;
     }
+    DLOG_IF(INFO, mVisualizeLocalMapping()) << "Culled " << numMapPointsCulled << "/"
+                                            << numRecentMapPoints
+                                            << " recently added map points.";
+    DLOG_IF(INFO, mVisualizeLocalMapping()) << "Added " << numMapPointsAddedPermanently << "/"
+                                            << numRecentMapPoints
+                                            << " permanently to the map.";
 }
 
 void LocalMapping::CreateNewMapPoints()
@@ -212,6 +233,9 @@ void LocalMapping::CreateNewMapPoints()
         nn=20; //param
     const vector<KeyFrame*> vpNeighKFs = mpCurrentKeyFrame->GetBestCovisibilityKeyFrames(nn);
 
+    DLOG_IF(INFO, mVisualizeLocalMapping()) << "Creating new map points from matches with the "
+                                            << vpNeighKFs.size()
+                                            << " nearest keyframes in covisibility graph.";
     ORBmatcher matcher(0.6,false); //param
 
     cv::Mat Rcw1 = mpCurrentKeyFrame->GetRotation();
@@ -449,10 +473,14 @@ void LocalMapping::CreateNewMapPoints()
             nnew++;
         }
     }
+
+    DLOG_IF(INFO, mVisualizeLocalMapping()) << "Triangulated " << nnew << " new map points.";
 }
 
 void LocalMapping::SearchInNeighbors()
 {
+    int numMapPointsFused = 0;
+
     // Retrieve neighbor keyframes
     int nn = 10; //param
     if(mbMonocular)
@@ -480,13 +508,13 @@ void LocalMapping::SearchInNeighbors()
 
 
     // Search matches by projection from current KF in target KFs
-    ORBmatcher matcher;
+    ORBmatcher matcher; //param
     vector<MapPoint*> vpMapPointMatches = mpCurrentKeyFrame->GetMapPointMatches();
     for(vector<KeyFrame*>::iterator vit=vpTargetKFs.begin(), vend=vpTargetKFs.end(); vit!=vend; vit++)
     {
         KeyFrame* pKFi = *vit;
 
-        matcher.Fuse(pKFi,vpMapPointMatches); //param
+        numMapPointsFused += matcher.Fuse(pKFi,vpMapPointMatches);
     }
 
     // Search matches by projection from target KFs in current KF
@@ -511,7 +539,8 @@ void LocalMapping::SearchInNeighbors()
         }
     }
 
-    matcher.Fuse(mpCurrentKeyFrame,vpFuseCandidates); //param
+    numMapPointsFused += matcher.Fuse(mpCurrentKeyFrame,vpFuseCandidates);
+    DLOG_IF(INFO, mVisualizeLocalMapping()) << numMapPointsFused << " duplicate map points fused.";
 
 
     // Update points
@@ -639,6 +668,7 @@ void LocalMapping::KeyFrameCulling()
 
     //TODO : throws out the first keyframe it find that falls into the criteria, doesn't consider whether
     // it might make more sense to get rid of other keyframes first, that e.g. are further away from the current keyframe
+    int numRemovedKeyFrames = 0;
     for(vector<KeyFrame*>::iterator vit=vpLocalKeyFrames.begin(), vend=vpLocalKeyFrames.end(); vit!=vend; vit++)
     {
         KeyFrame* pKF = *vit;
@@ -695,8 +725,13 @@ void LocalMapping::KeyFrameCulling()
         }
 
         if(nRedundantObservations>0.9*nMPs) //param
+        {
             pKF->SetBadFlag();
+            numRemovedKeyFrames++;
+        }
     }
+    DLOG_IF(INFO, mVisualizeLocalMapping()) << "Removed " << numRemovedKeyFrames
+                                            << " keyframes from local map.";
 }
 
 cv::Mat LocalMapping::SkewSymmetricMatrix(const cv::Mat &v)
