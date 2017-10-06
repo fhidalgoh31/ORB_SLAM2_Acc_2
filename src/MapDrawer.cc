@@ -21,6 +21,7 @@
 #include "MapDrawer.h"
 #include "MapPoint.h"
 #include "KeyFrame.h"
+#include "Parameter.h"
 #include <pangolin/pangolin.h>
 #include <mutex>
 
@@ -87,6 +88,8 @@ void MapDrawer::DrawKeyFrames(const bool bDrawKF, const bool bDrawGraph)
     const float z = w*0.6;
 
     const vector<KeyFrame*> vpKFs = mpMap->GetAllKeyFrames();
+    bool showRelocalizaionCandidates =
+        ParameterManager::getParameter<bool>(ParameterGroup::VISUAL, "Show Relocalization")->getValue();
 
     if(bDrawKF)
     {
@@ -100,7 +103,14 @@ void MapDrawer::DrawKeyFrames(const bool bDrawKF, const bool bDrawGraph)
             glMultMatrixf(Twc.ptr<GLfloat>(0));
 
             glLineWidth(mKeyFrameLineWidth);
-            glColor3f(0.0f,0.0f,1.0f);
+            if(pKF->mbIsRelocalizationCandidate && showRelocalizaionCandidates)
+            {
+                glColor3f(1.0f,0.0f,0.0f);
+            }
+            else
+            {
+                glColor3f(0.0f,0.0f,1.0f);
+            }
             glBegin(GL_LINES);
             glVertex3f(0,0,0);
             glVertex3f(w,h,z);

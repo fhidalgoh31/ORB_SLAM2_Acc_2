@@ -225,6 +225,11 @@ cv::Mat System::TrackMonocular(const cv::Mat &im, const double &timestamp)
 
     //update parameters before next image is processed
     ParameterManager::updateParameters();
+    //Reset debug variables
+    for(auto keyFrame : mpMap->GetAllKeyFrames())
+    {
+        keyFrame->mbIsRelocalizationCandidate = false;
+    }
 
     // Check mode change
     {

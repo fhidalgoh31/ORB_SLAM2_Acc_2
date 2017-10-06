@@ -299,6 +299,7 @@ vector<KeyFrame*> KeyFrameDatabase::DetectRelocalizationCandidates(Frame *F)
             KeyFrame* pKFi = it->second;
             if(!spAlreadyAddedKF.count(pKFi))
             {
+                pKFi->mbIsRelocalizationCandidate = true;
                 vpRelocCandidates.push_back(pKFi);
                 spAlreadyAddedKF.insert(pKFi);
             }
