@@ -26,8 +26,8 @@
 #include "Map.h"
 #include "ORBVocabulary.h"
 #include "Tracking.h"
-
 #include "KeyFrameDatabase.h"
+#include "Parameter.h"
 
 #include <thread>
 #include <mutex>
@@ -144,6 +144,8 @@ protected:
 
 
     bool mnFullBAIdx;
+
+    Parameter<bool> mVisualizeLoopClosing;
 };
 
 } //namespace ORB_SLAM

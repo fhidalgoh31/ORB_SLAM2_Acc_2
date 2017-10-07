@@ -39,6 +39,7 @@ LoopClosing::LoopClosing(Map *pMap, KeyFrameDatabase *pDB, ORBVocabulary *pVoc, 
     mbResetRequested(false), mbFinishRequested(false), mbFinished(true), mpMap(pMap),
     mpKeyFrameDB(pDB), mpORBVocabulary(pVoc), mpMatchedKF(NULL), mLastLoopKFid(0), mbRunningGBA(false), mbFinishedGBA(true),
     mbStopGBA(false), mpThreadGBA(NULL), mbFixScale(bFixScale), mnFullBAIdx(0)
+    , mVisualizeLoopClosing("Show Loops", false, true, ParameterGroup::VISUAL, []{})
 {
     mnCovisibilityConsistencyTh = 3; //param
 }
@@ -139,20 +140,23 @@ bool LoopClosing::DetectLoop()
 
     // Query the database imposing the minimum score
     vector<KeyFrame*> vpCandidateKFs = mpKeyFrameDB->DetectLoopCandidates(mpCurrentKF, minScore);
+    DLOG_IF(INFO, mVisualizeLoopClosing()) << "&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&"
+                                           << " LOOP CLOSING";
 
     // If there are no loop candidates, just add new keyframe and return false
     if(vpCandidateKFs.empty())
     {
         mpKeyFrameDB->add(mpCurrentKF);
-        //TODO : the groups are only cleared here, what happens
-        // if a there is no KeyFrame without candidates and the groups are never
-        // cleared before a new possible loop closure was investigated?
-        // Would it just get accepted straight away?
         mvConsistentGroups.clear();
         mpCurrentKF->SetErase();
+        DLOG_IF(INFO, mVisualizeLoopClosing()) << "No candidate Keyframes found, aborting.";
         return false;
     }
 
+    DLOG_IF(INFO, mVisualizeLoopClosing()) << "Found " << vpCandidateKFs.size()
+                                           << " candidate keyframes for loop closing.";
+    DLOG_IF(INFO, mVisualizeLoopClosing()) << "Checking consistency. Current number of consistent "
+                                           << "candidate groups: " << mvConsistentGroups.size();
     // For each loop candidate check consistency with previous loop candidates
     // Each candidate expands a covisibility group (keyframes connected to the loop candidate in the covisibility graph)
     // A group is consistent with a previous group if they share at least a keyframe
@@ -161,10 +165,15 @@ bool LoopClosing::DetectLoop()
 
     vector<ConsistentGroup> vCurrentConsistentGroups;
     vector<bool> vbConsistentGroup(mvConsistentGroups.size(),false);
+    // For the first keyframe that comes in when mvConsistentGroups is empty
+    // the loop will create a entry with it's counter at 0 in mvConsistentGroups for
+    // every keyframe group.
     for(size_t i=0, iend=vpCandidateKFs.size(); i<iend; i++)
     {
         KeyFrame* pCandidateKF = vpCandidateKFs[i];
 
+        // collect all keyframes connected to the current keyframe in the covisibility graph
+        // form a candidate group form them
         set<KeyFrame*> spCandidateGroup = pCandidateKF->GetConnectedKeyFrames();
         spCandidateGroup.insert(pCandidateKF);
 
@@ -177,6 +186,8 @@ bool LoopClosing::DetectLoop()
             bool bConsistent = false;
             for(set<KeyFrame*>::iterator sit=spCandidateGroup.begin(), send=spCandidateGroup.end(); sit!=send;sit++)
             {
+                // check if a keyframe from the currenct candidate group is also part of the
+                // previous group
                 if(sPreviousGroup.count(*sit))
                 {
                     bConsistent=true;
@@ -213,6 +224,16 @@ bool LoopClosing::DetectLoop()
 
     // Update Covisibility Consistent Groups
     mvConsistentGroups = vCurrentConsistentGroups;
+    DLOG_IF(INFO, mVisualizeLoopClosing()) << "New number of consistent "
+                                           << "candidate groups: " << mvConsistentGroups.size();
+    if(mVisualizeLoopClosing())
+    {
+        for (int i = 0; i < mvConsistentGroups.size(); i++)
+        {
+            DLOG_IF(INFO, mVisualizeLoopClosing()) << "Consistency count for group: " << i
+                                                   << " = " << mvConsistentGroups[i].second;
+        }
+    }
 
 
     // Add Current Keyframe to database
@@ -225,6 +246,7 @@ bool LoopClosing::DetectLoop()
     }
     else
     {
+        DLOG_IF(INFO, mVisualizeLoopClosing()) << "Have enough consistency, going on to confirmation.";
         return true;
     }
 
