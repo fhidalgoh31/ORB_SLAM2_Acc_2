@@ -259,6 +259,7 @@ bool LoopClosing::ComputeSim3()
     // For each consistent loop candidate we try to compute a Sim3
 
     const int nInitialCandidates = mvpEnoughConsistentCandidates.size();
+    DLOG_IF(INFO, mVisualizeLoopClosing()) << "Using consistent candidates to compute Sim3.";
 
     // We compute first ORB matches for each candidate
     // If enough matches are found, we setup a Sim3Solver
@@ -292,11 +293,17 @@ bool LoopClosing::ComputeSim3()
 
         if(nmatches<20) //param
         {
+            DLOG_IF(INFO, mVisualizeLoopClosing()) << "Candidate " << i
+                                                   << " has " << nmatches
+                                                   << " matches with current keyframe. -> Discarded!";
             vbDiscarded[i] = true;
             continue;
         }
         else
         {
+            DLOG_IF(INFO, mVisualizeLoopClosing()) << "Candidate " << i
+                                                   << " has " << nmatches
+                                                   << " matches with current keyframe. -> Using it!";
             Sim3Solver* pSolver = new Sim3Solver(mpCurrentKF,pKF,vvpMapPointMatches[i],mbFixScale);
             pSolver->SetRansacParameters(0.99,20,300); //param
             vpSim3Solvers[i] = pSolver;
@@ -336,6 +343,8 @@ bool LoopClosing::ComputeSim3()
             // If RANSAC returns a Sim3, perform a guided matching and optimize with all correspondences
             if(!Scm.empty())
             {
+                DLOG_IF(INFO, mVisualizeLoopClosing()) << "Found Sim(3) for candidate " << i
+                                                       << " trying to optimize it.";
                 vector<MapPoint*> vpMapPointMatches(vvpMapPointMatches[i].size(), static_cast<MapPoint*>(NULL));
                 for(size_t j=0, jend=vbInliers.size(); j<jend; j++)
                 {
@@ -346,14 +355,17 @@ bool LoopClosing::ComputeSim3()
                 cv::Mat R = pSolver->GetEstimatedRotation();
                 cv::Mat t = pSolver->GetEstimatedTranslation();
                 const float s = pSolver->GetEstimatedScale();
-                matcher.SearchBySim3(mpCurrentKF,pKF,vpMapPointMatches,s,R,t,7.5); //param
+                int nmatchesSim3 = matcher.SearchBySim3(mpCurrentKF,pKF,vpMapPointMatches,s,R,t,7.5); //param
 
                 g2o::Sim3 gScm(Converter::toMatrix3d(R),Converter::toVector3d(t),s);
                 const int nInliers = Optimizer::OptimizeSim3(mpCurrentKF, pKF, vpMapPointMatches, gScm, 10, mbFixScale); //param
 
+                DLOG_IF(INFO, mVisualizeLoopClosing()) << nInliers << " matches after optimization.";
                 // If optimization is succesful stop ransacs and continue
                 if(nInliers>=20) //param
                 {
+                    DLOG_IF(INFO, mVisualizeLoopClosing()) << "Thats enough,"
+                                                           << " candidate accepted for last test!";
                     bMatch = true;
                     mpMatchedKF = pKF;
                     g2o::Sim3 gSmw(Converter::toMatrix3d(pKF->GetRotation()),Converter::toVector3d(pKF->GetTranslation()),1.0);
@@ -361,6 +373,9 @@ bool LoopClosing::ComputeSim3()
                     mScw = Converter::toCvMat(mg2oScw);
 
                     mvpCurrentMatchedPoints = vpMapPointMatches;
+                    //TODO : If there is another candidate that performs better than the first one
+                    // accepted here and the one accepted here should be rejected later the one
+                    // rejected here will not be considered anymore
                     break;
                 }
             }
@@ -369,12 +384,15 @@ bool LoopClosing::ComputeSim3()
 
     if(!bMatch)
     {
+        DLOG_IF(INFO, mVisualizeLoopClosing()) << "No candidate good enough, no loop found.";
         for(int i=0; i<nInitialCandidates; i++)
              mvpEnoughConsistentCandidates[i]->SetErase();
         mpCurrentKF->SetErase();
         return false;
     }
 
+    DLOG_IF(INFO, mVisualizeLoopClosing()) << "Doing one last matching with map points "
+                                           << "found in keyframes connected to candidate.";
     // Retrieve MapPoints seen in Loop Keyframe and neighbors
     vector<KeyFrame*> vpLoopConnectedKFs = mpMatchedKF->GetVectorCovisibleKeyFrames();
     vpLoopConnectedKFs.push_back(mpMatchedKF);
@@ -398,9 +416,11 @@ bool LoopClosing::ComputeSim3()
     }
 
     // Find more matches projecting with the computed Sim3
-    matcher.SearchByProjection(mpCurrentKF, mScw, mvpLoopMapPoints, mvpCurrentMatchedPoints,10); //param
+    int nmatchesProj = matcher.SearchByProjection(mpCurrentKF, mScw, mvpLoopMapPoints, mvpCurrentMatchedPoints,10); //param
 
     // If enough matches accept Loop
+    //TODO : nmatchestotal could just be calculated from nInliers and nmatchesProj instead of
+    // iterating through all points again.
     int nTotalMatches = 0;
     for(size_t i=0; i<mvpCurrentMatchedPoints.size(); i++)
     {
@@ -408,8 +428,12 @@ bool LoopClosing::ComputeSim3()
             nTotalMatches++;
     }
 
+    DLOG_IF(INFO, mVisualizeLoopClosing()) << "Found " << nmatchesProj  << " more matches."
+                                           << " Total is now: " << nTotalMatches;
+
     if(nTotalMatches>=40) //param
     {
+        DLOG_IF(INFO, mVisualizeLoopClosing()) << "Loop accepted!";
         for(int i=0; i<nInitialCandidates; i++)
             if(mvpEnoughConsistentCandidates[i]!=mpMatchedKF)
                 mvpEnoughConsistentCandidates[i]->SetErase();
@@ -417,6 +441,7 @@ bool LoopClosing::ComputeSim3()
     }
     else
     {
+        DLOG_IF(INFO, mVisualizeLoopClosing()) << "Loop discarded ...";
         for(int i=0; i<nInitialCandidates; i++)
             mvpEnoughConsistentCandidates[i]->SetErase();
         mpCurrentKF->SetErase();
@@ -434,8 +459,10 @@ void LoopClosing::CorrectLoop()
     mpLocalMapper->RequestStop();
 
     // If a Global Bundle Adjustment is running, abort it
+    DLOG_IF(INFO, mVisualizeLoopClosing()) << "Implementing and refining loop.";
     if(isRunningGBA())
     {
+        DLOG_IF(INFO, mVisualizeLoopClosing()) << "Aborting already running global BA!";
         unique_lock<mutex> lock(mMutexGBA);
         mbStopGBA = true;
 
@@ -453,6 +480,7 @@ void LoopClosing::CorrectLoop()
     {
         usleep(1000);
     }
+    DLOG_IF(INFO, mVisualizeLoopClosing()) << "Stopped local mapping.";
 
     // Ensure current keyframe is updated
     mpCurrentKF->UpdateConnections();
@@ -466,6 +494,8 @@ void LoopClosing::CorrectLoop()
     cv::Mat Twc = mpCurrentKF->GetPoseInverse();
 
 
+    DLOG_IF(INFO, mVisualizeLoopClosing()) << "Moving keyframes and map points local to current "
+                                           << "keyframe to their new position.";
     {
         // Get Map Mutex
         unique_lock<mutex> lock(mpMap->mMutexMapUpdate);
@@ -565,12 +595,14 @@ void LoopClosing::CorrectLoop()
     // Project MapPoints observed in the neighborhood of the loop keyframe
     // into the current keyframe and neighbors using corrected poses.
     // Fuse duplications.
+    DLOG_IF(INFO, mVisualizeLoopClosing()) << "Removing duplicate map points.";
     SearchAndFuse(CorrectedSim3);
 
 
     // After the MapPoint fusion, new links in the covisibility graph will appear attaching both sides of the loop
     map<KeyFrame*, set<KeyFrame*> > LoopConnections;
 
+    DLOG_IF(INFO, mVisualizeLoopClosing()) << "Connecting both sides of the loop";
     for(vector<KeyFrame*>::iterator vit=mvpCurrentConnectedKFs.begin(), vend=mvpCurrentConnectedKFs.end(); vit!=vend; vit++)
     {
         KeyFrame* pKFi = *vit;
@@ -590,6 +622,8 @@ void LoopClosing::CorrectLoop()
     }
 
     // Optimize graph
+    DLOG_IF(INFO, mVisualizeLoopClosing()) << "Propagating loop through essential graph.";
+    for(vector<KeyFrame*>::iterator vit=mvpCurrentConnectedKFs.begin(), vend=mvpCurrentConnectedKFs.end(); vit!=vend; vit++)
     Optimizer::OptimizeEssentialGraph(mpMap, mpMatchedKF, mpCurrentKF, NonCorrectedSim3, CorrectedSim3, LoopConnections, mbFixScale);
 
     mpMap->InformNewBigChange();
@@ -602,6 +636,7 @@ void LoopClosing::CorrectLoop()
     mbRunningGBA = true;
     mbFinishedGBA = false;
     mbStopGBA = false;
+    DLOG_IF(INFO, mVisualizeLoopClosing()) << "Starting a global bundle adjustment in a new thread";
     mpThreadGBA = new thread(&LoopClosing::RunGlobalBundleAdjustment,this,mpCurrentKF->mnId);
 
     // Loop closed. Release Local Mapping.
@@ -686,6 +721,7 @@ void LoopClosing::RunGlobalBundleAdjustment(unsigned long nLoopKF)
 
         if(!mbStopGBA)
         {
+            DLOG_IF(INFO, mVisualizeLoopClosing()) << "LOOP CLOSING: GLOBAL BA THREAD FINISHED!";
             cout << "Global Bundle Adjustment finished" << endl;
             cout << "Updating map ..." << endl;
             mpLocalMapper->RequestStop();
@@ -700,6 +736,7 @@ void LoopClosing::RunGlobalBundleAdjustment(unsigned long nLoopKF)
             unique_lock<mutex> lock(mpMap->mMutexMapUpdate);
 
             // Correct keyframes starting at map first keyframe
+            DLOG_IF(INFO, mVisualizeLoopClosing()) << "Updating keyframes and Map points accordingly";
             list<KeyFrame*> lpKFtoCheck(mpMap->mvpKeyFrameOrigins.begin(),mpMap->mvpKeyFrameOrigins.end());
 
             while(!lpKFtoCheck.empty())
