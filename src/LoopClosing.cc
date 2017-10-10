@@ -379,6 +379,10 @@ bool LoopClosing::ComputeSim3()
                     break;
                 }
             }
+            else
+            {
+                DLOG_IF(INFO, mVisualizeLoopClosing()) << "Couldn't find Sim(3) for candidate " << i;
+            }
         }
     }
 
