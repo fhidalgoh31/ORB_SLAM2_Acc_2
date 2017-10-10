@@ -627,7 +627,6 @@ void LoopClosing::CorrectLoop()
 
     // Optimize graph
     DLOG_IF(INFO, mVisualizeLoopClosing()) << "Propagating loop through essential graph.";
-    for(vector<KeyFrame*>::iterator vit=mvpCurrentConnectedKFs.begin(), vend=mvpCurrentConnectedKFs.end(); vit!=vend; vit++)
     Optimizer::OptimizeEssentialGraph(mpMap, mpMatchedKF, mpCurrentKF, NonCorrectedSim3, CorrectedSim3, LoopConnections, mbFixScale);
 
     mpMap->InformNewBigChange();
