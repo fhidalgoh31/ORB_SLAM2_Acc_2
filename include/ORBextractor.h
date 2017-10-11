@@ -51,7 +51,8 @@ public:
     enum {HARRIS_SCORE=0, FAST_SCORE=1 };
 
     ORBextractor(int nfeatures, float scaleFactor, int nlevels,
-                 int iniThFAST, int minThFAST, bool initialization = false);
+                 int iniThFAST, int minThFAST, std::vector<std::vector<int>> excludedRegions,
+                 bool initialization = false);
 
     ~ORBextractor(){}
 
@@ -110,6 +111,7 @@ protected:
     std::vector<cv::Point> pattern;
 
     std::vector<int> mnFeaturesPerLevel;
+    std::vector<std::vector<int>> mExcludedRegions;
 
     std::vector<int> umax;
 

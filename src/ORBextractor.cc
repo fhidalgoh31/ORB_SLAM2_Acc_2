@@ -413,8 +413,10 @@ static int bit_pattern_31_[256*4] =
 };
 
 ORBextractor::ORBextractor(int _nfeatures, float _scaleFactor, int _nlevels,
-         int _iniThFAST, int _minThFAST, bool initialization)
-    : visualizeExtractor("Show Extraction", false, true,
+         int _iniThFAST, int _minThFAST, std::vector<std::vector<int>> excludedRegions,
+         bool initialization)
+    : mExcludedRegions(excludedRegions)
+    , visualizeExtractor("Show Extraction", false, true,
             (initialization ? ParameterGroup::UNDEFINED : ParameterGroup::VISUAL), []{})
     , nFeatures("Num features", _nfeatures, 0, 5000,
             (initialization ? ParameterGroup::INITIALIZATION : ParameterGroup::ORBEXTRACTOR),
@@ -855,7 +857,28 @@ void ORBextractor::ComputeKeyPointsOctTree(vector<vector<KeyPoint> >& allKeypoin
                 // DLOG(INFO) << "Actual cell position y: " << iniY << "-" << maxY;
                 // DLOG(INFO) << "Actual cell position x: " << iniX << "-" << maxX;
 
-                // extract FAST corners
+                // check if cell collides with the excluded regions
+                //TODO : this only checks whether a cell touches at all,
+                // should be redone so the cells are made smaller according to regions
+                bool overlap = false;
+                for(std::vector<int>& region : mExcludedRegions)
+                {
+                    // If one rectangle is on left side of other
+                    if (iniX > region[2]*mvInvScaleFactor[level] || region[0]*mvInvScaleFactor[level] > maxX)
+                        continue;
+
+                    // If one rectangle is above other
+                    if (iniY > region[3]*mvInvScaleFactor[level] || region[1]*mvInvScaleFactor[level] > maxY)
+                        continue;
+
+                    overlap = true;
+                    break;
+                }
+                if(overlap)
+                {
+                    continue;
+                }
+
                 vector<cv::KeyPoint> vKeysCell;
                 FAST(mvImagePyramid[level].rowRange(iniY,maxY).colRange(iniX,maxX),
                      vKeysCell,iniThFAST(),true);

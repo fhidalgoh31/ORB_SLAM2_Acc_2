@@ -122,14 +122,32 @@ Tracking::Tracking(System *pSys, ORBVocabulary* pVoc, FrameDrawer *pFrameDrawer,
     int nLevels = mfSettings["ORBextractor.nLevels"];
     int fIniThFAST = mfSettings["ORBextractor.iniThFAST"];
     int fMinThFAST = mfSettings["ORBextractor.minThFAST"];
+    cv::FileNode regionsNode = mfSettings["ORBextractor.ExcludedRegions"];
+    std::vector<std::vector<int> > excludedRegions;
+    std::string regionsStr = "[";
+    for (cv::FileNodeIterator it = regionsNode.begin(); it != regionsNode.end(); it++)
+    {
+        cv::FileNode regionNode = *it;
+        regionsStr += " [";
+        std::vector<int> region;
+        for (cv::FileNodeIterator it2 = regionNode.begin(); it2 != regionNode.end(); it2++)
+        {
+            region.reserve(4);
+            region.push_back(static_cast<int>(*it2));
+            regionsStr += " " + std::to_string(static_cast<int>(*it2)) + " ";
+        }
+        excludedRegions.push_back(region);
+        regionsStr += " ]";
+    }
+    regionsStr += "]";
 
-    mpORBextractorLeft = new ORBextractor(nFeatures,fScaleFactor,nLevels,fIniThFAST,fMinThFAST);
+    mpORBextractorLeft = new ORBextractor(nFeatures,fScaleFactor,nLevels,fIniThFAST,fMinThFAST,excludedRegions);
 
     if(sensor==System::STEREO)
-        mpORBextractorRight = new ORBextractor(nFeatures,fScaleFactor,nLevels,fIniThFAST,fMinThFAST);
+        mpORBextractorRight = new ORBextractor(nFeatures,fScaleFactor,nLevels,fIniThFAST,fMinThFAST,excludedRegions);
 
     if(sensor==System::MONOCULAR)
-        mpIniORBextractor = new ORBextractor(2*nFeatures,fScaleFactor,nLevels,fIniThFAST,fMinThFAST, true); //param
+        mpIniORBextractor = new ORBextractor(2*nFeatures,fScaleFactor,nLevels,fIniThFAST,fMinThFAST,excludedRegions,true); //param
 
     cout << endl  << "ORB Extractor Parameters: " << endl;
     cout << "- Number of Features: " << nFeatures << endl;
@@ -137,6 +155,7 @@ Tracking::Tracking(System *pSys, ORBVocabulary* pVoc, FrameDrawer *pFrameDrawer,
     cout << "- Scale Factor: " << fScaleFactor << endl;
     cout << "- Initial Fast Threshold: " << fIniThFAST << endl;
     cout << "- Minimum Fast Threshold: " << fMinThFAST << endl;
+    cout << "- Excluded Regions: " << regionsStr << endl;
 
     if(sensor==System::STEREO || sensor==System::RGBD)
     {
