@@ -57,6 +57,7 @@ void LoopClosing::SetLocalMapper(LocalMapping *pLocalMapper)
 
 void LoopClosing::Run()
 {
+    LOG_SCOPE("Loop Closing")
     mbFinished =false;
 
     while(1)
@@ -456,6 +457,7 @@ bool LoopClosing::ComputeSim3()
 
 void LoopClosing::CorrectLoop()
 {
+    DLOG(STATUS) << "Loop detected!";
     cout << "Loop detected!" << endl;
 
     // Send a stop signal to Local Mapping

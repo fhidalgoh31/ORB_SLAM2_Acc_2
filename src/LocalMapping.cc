@@ -47,7 +47,7 @@ void LocalMapping::SetTracker(Tracking *pTracker)
 
 void LocalMapping::Run()
 {
-
+    LOG_SCOPE("Local Mapping")
     mbFinished = false;
 
     while(1)

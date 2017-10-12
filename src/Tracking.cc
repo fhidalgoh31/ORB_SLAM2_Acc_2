@@ -2,7 +2,7 @@
 * This file is part of ORB-SLAM2.
 *
 * Copyright (C) 2014-2016 Raúl Mur-Artal <raulmur at unizar dot es> (University of Zaragoza)
-* For more information see <https://github.com/raulmur/ORB_SLAM2>
+* For more Information see <https://github.com/raulmur/ORB_SLAM2>
 *
 * ORB-SLAM2 is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,6 @@
 
 #include<opencv2/core/core.hpp>
 #include<opencv2/features2d/features2d.hpp>
-#include <glog/logging.h>
 
 #include"ORBmatcher.h"
 #include"FrameDrawer.h"
@@ -322,7 +321,7 @@ void Tracking::Track()
     else
     {
         // System is initialized. Track Frame.
-        bool bOK;
+        bool bOK = false;
 
         if(mVisualizeTracking())
         {
@@ -347,32 +346,41 @@ void Tracking::Track()
         // Initial camera pose estimation using motion model or relocalization (if tracking is lost)
         if(!mbOnlyTracking)
         {
-            // Local Mapping is activated. This is the normal behaviour, unless
-            // you explicitly activate the "only tracking" mode.
-
-            if(mState==OK && !mTriggerRelocalization.checkAndResetIfChanged())
+            // Trigger relocalization button will cause to jump over this block
+            // leading to a LOST state further below
+            if(!mTriggerRelocalization.checkAndResetIfChanged())
             {
-                DLOG_IF(INFO, mVisualizeTracking()) << "==========================================="
-                                                    << " TRACKING";
-                // Local Mapping might have changed some MapPoints tracked in last frame
-                CheckReplacedInLastFrame();
-
-                if(mVelocity.empty() || mCurrentFrame.mnId<mnLastRelocFrameId+2)
+                // Local Mapping is activated. This is the normal behaviour, unless
+                // you explicitly activate the "only tracking" mode.
+                if(mState==OK)
                 {
-                    DLOG_IF(INFO, mVisualizeTracking()) << "Tracking NOT using motion model.";
-                    bOK = TrackReferenceKeyFrame();
+                    LOG_SCOPE("Tracking");
+                    DLOG_IF(INFO, mVisualizeTracking()) << "==========================================="
+                                                        << " TRACKING";
+                    // Local Mapping might have changed some MapPoints tracked in last frame
+                    CheckReplacedInLastFrame();
+
+                    if(mVelocity.empty() || mCurrentFrame.mnId<mnLastRelocFrameId+2)
+                    {
+                        DLOG_IF(INFO, mVisualizeTracking()) << "Tracking NOT using motion model.";
+                        bOK = TrackReferenceKeyFrame();
+                    }
+                    else
+                    {
+                        DLOG_IF(INFO, mVisualizeTracking()) << "Tracking using motion model.";
+                        bOK = TrackWithMotionModel();
+                        if(!bOK)
+                            bOK = TrackReferenceKeyFrame();
+                            if(!bOK)
+                            {
+                                DLOG(STATUS) << "Tracking LOST!";
+                            }
+                    }
                 }
                 else
                 {
-                    DLOG_IF(INFO, mVisualizeTracking()) << "Tracking using motion model.";
-                    bOK = TrackWithMotionModel();
-                    if(!bOK)
-                        bOK = TrackReferenceKeyFrame();
+                    bOK = Relocalization();
                 }
-            }
-            else
-            {
-                bOK = Relocalization();
             }
         }
         else
@@ -388,6 +396,7 @@ void Tracking::Track()
                 if(!mbVO)
                 {
                     // In last frame we tracked enough MapPoints in the map
+                    LOG_SCOPE("Tracking");
 
                     if(!mVelocity.empty())
                     {
@@ -415,6 +424,7 @@ void Tracking::Track()
                     cv::Mat TcwMM;
                     if(!mVelocity.empty())
                     {
+                        LOG_SCOPE("Tracking")
                         DLOG_IF(INFO, mVisualizeTracking()) << "Tracking using motion model.";
                         bOKMM = TrackWithMotionModel();
                         vpMPsMM = mCurrentFrame.mvpMapPoints;
@@ -455,11 +465,13 @@ void Tracking::Track()
         // If we have an initial estimation of the camera pose and matching. Track the local map.
         if(!mbOnlyTracking)
         {
+            LOG_SCOPE("Tracking");
             if(bOK)
                 bOK = TrackLocalMap();
         }
         else
         {
+            LOG_SCOPE("Tracking");
             // mbVO true means that there are few matches to MapPoints in the map. We cannot retrieve
             // a local map and therefore we do not perform TrackLocalMap(). Once the system relocalizes
             // the camera we will use the local map again.
@@ -468,9 +480,14 @@ void Tracking::Track()
         }
 
         if(bOK)
+        {
             mState = OK;
-        else
+        }
+        else if (mState!=LOST)
+        {
+            DLOG(STATUS) << "Tracking LOST!";
             mState=LOST;
+        }
 
         // Update drawer
         mpFrameDrawer->Update(this);
@@ -514,6 +531,7 @@ void Tracking::Track()
             // Check if we need to insert a new keyframe
             if(NeedNewKeyFrame())
             {
+                LOG_SCOPE("Tracking")
                 DLOG_IF(INFO, mVisualizeTracking()) << "This frame is going to be a new keyframe!";
                 CreateNewKeyFrame();
             }
@@ -532,6 +550,7 @@ void Tracking::Track()
         // Reset if the camera get lost soon after initialization
         if(mState==LOST)
         {
+            LOG_SCOPE("Tracking");
             if(mpMap->KeyFramesInMap()<=5) //param
             {
                 cout << "Track lost soon after initialisation, reseting..." << endl;
@@ -546,7 +565,7 @@ void Tracking::Track()
         mLastFrame = Frame(mCurrentFrame);
     }
 
-    // Store frame pose information to retrieve the complete camera trajectory afterwards.
+    // Store frame pose Information to retrieve the complete camera trajectory afterwards.
     if(!mCurrentFrame.mTcw.empty())
     {
         cv::Mat Tcr = mCurrentFrame.mTcw*mCurrentFrame.mpReferenceKF->GetPoseInverse();
@@ -623,7 +642,7 @@ void Tracking::StereoInitialization()
 
 void Tracking::MonocularInitialization()
 {
-
+    LOG_SCOPE("Initialization")
     if(!mpInitializer)
     {
         // Set Reference Frame
@@ -801,6 +820,8 @@ void Tracking::CreateInitialMapMonocular()
     mpMap->mvpKeyFrameOrigins.push_back(pKFini);
 
     mState=OK;
+
+    DLOG(STATUS) << "Initialization OK!";
 }
 
 void Tracking::CheckReplacedInLastFrame()
@@ -1464,6 +1485,7 @@ void Tracking::UpdateLocalKeyFrames()
 
 bool Tracking::Relocalization()
 {
+    LOG_SCOPE("Relocalization")
     DLOG_IF(INFO, mVisualizeRelocalization()) << "+++++++++++++++++++++++++++++++++++++++++++"
                                         << " RELOCALIZATION";
     // Compute Bag of Words Vector
@@ -1502,7 +1524,7 @@ bool Tracking::Relocalization()
     //TODO : if last velocities were known this could check keyframes in an area
     //that increases with time relative to the last known velocity
     //might avoid relocalizations somwhere completely different and reduce search cost
-    //heading info from imu would also help to exclude keyframes
+    //heading INFO from imu would also help to exclude keyframes
 
     //search matches between the candidate keyframes' mappoints and current frames keypoints
     //TODO : One could probably filter all candidates which track less than 50 map points, since in
@@ -1658,8 +1680,9 @@ bool Tracking::Relocalization()
     }
     else
     {
-        DLOG_IF(INFO, mVisualizeRelocalization()) << "Relocalization successful.";
         mnLastRelocFrameId = mCurrentFrame.mnId;
+        DLOG_IF(INFO, mVisualizeRelocalization()) << "Relocalization successful.";
+        DLOG(STATUS) << "Relocalization OK!";
         return true;
     }
 
@@ -1667,7 +1690,6 @@ bool Tracking::Relocalization()
 
 void Tracking::Reset()
 {
-
     cout << "System Reseting" << endl;
     if(mpViewer)
     {

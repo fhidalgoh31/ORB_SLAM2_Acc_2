@@ -1,11 +1,12 @@
 #ifndef PARAMETER_H
 #define PARAMETER_H
 
+#include "Debug.h"
+
 #include <vector>
 #include <pangolin/pangolin.h>
 #include <boost/variant.hpp>
 #include <boost/lexical_cast.hpp>
-#include <glog/logging.h>
 
 namespace ORB_SLAM2 {
 

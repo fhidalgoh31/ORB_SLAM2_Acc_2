@@ -251,6 +251,8 @@ void Viewer::Run()
             bLocalizationMode = false;
             bFollow = true;
             menuFollowCamera = true;
+            LOG_SCOPE("System");
+            DLOG(STATUS) << "RESET!";
             mpSystem->Reset();
             menuReset = false;
         }
