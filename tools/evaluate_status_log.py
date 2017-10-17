@@ -2,7 +2,7 @@ import argparse
 import logging
 import matplotlib
 matplotlib.use("Agg")
-matplotlib.rcParams.update({'font.size': 9})
+#  matplotlib.rcParams.update({'font.size': 5})
 import matplotlib.pyplot as plt
 import matplotlib.lines as lines
 import os
@@ -142,7 +142,7 @@ class OrbSlamSession(object):
             else:
                 return tuple(i/inch for i in tupl)
 
-        fig = plt.figure(figsize=cm2inch(12, 0.5))
+        fig = plt.figure(figsize=cm2inch(20, 0.5))
         ax = fig.add_subplot(111)
         ax.yaxis.set_visible(False)
         ax.spines['right'].set_visible(False)
