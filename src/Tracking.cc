@@ -354,7 +354,6 @@ void Tracking::Track()
                 // you explicitly activate the "only tracking" mode.
                 if(mState==OK)
                 {
-                    LOG_SCOPE("Tracking");
                     DLOG_IF(INFO, mVisualizeTracking()) << "==========================================="
                                                         << " TRACKING";
                     // Local Mapping might have changed some MapPoints tracked in last frame
@@ -371,10 +370,6 @@ void Tracking::Track()
                         bOK = TrackWithMotionModel();
                         if(!bOK)
                             bOK = TrackReferenceKeyFrame();
-                            if(!bOK)
-                            {
-                                DLOG(STATUS) << "Tracking LOST!";
-                            }
                     }
                 }
                 else
@@ -396,7 +391,6 @@ void Tracking::Track()
                 if(!mbVO)
                 {
                     // In last frame we tracked enough MapPoints in the map
-                    LOG_SCOPE("Tracking");
 
                     if(!mVelocity.empty())
                     {
@@ -424,7 +418,6 @@ void Tracking::Track()
                     cv::Mat TcwMM;
                     if(!mVelocity.empty())
                     {
-                        LOG_SCOPE("Tracking")
                         DLOG_IF(INFO, mVisualizeTracking()) << "Tracking using motion model.";
                         bOKMM = TrackWithMotionModel();
                         vpMPsMM = mCurrentFrame.mvpMapPoints;
@@ -465,13 +458,11 @@ void Tracking::Track()
         // If we have an initial estimation of the camera pose and matching. Track the local map.
         if(!mbOnlyTracking)
         {
-            LOG_SCOPE("Tracking");
             if(bOK)
                 bOK = TrackLocalMap();
         }
         else
         {
-            LOG_SCOPE("Tracking");
             // mbVO true means that there are few matches to MapPoints in the map. We cannot retrieve
             // a local map and therefore we do not perform TrackLocalMap(). Once the system relocalizes
             // the camera we will use the local map again.
@@ -485,7 +476,6 @@ void Tracking::Track()
         }
         else if (mState!=LOST)
         {
-            DLOG(STATUS) << "Tracking LOST!";
             mState=LOST;
         }
 
@@ -531,7 +521,6 @@ void Tracking::Track()
             // Check if we need to insert a new keyframe
             if(NeedNewKeyFrame())
             {
-                LOG_SCOPE("Tracking")
                 DLOG_IF(INFO, mVisualizeTracking()) << "This frame is going to be a new keyframe!";
                 CreateNewKeyFrame();
             }
@@ -550,7 +539,6 @@ void Tracking::Track()
         // Reset if the camera get lost soon after initialization
         if(mState==LOST)
         {
-            LOG_SCOPE("Tracking");
             if(mpMap->KeyFramesInMap()<=5) //param
             {
                 cout << "Track lost soon after initialisation, reseting..." << endl;
@@ -642,7 +630,6 @@ void Tracking::StereoInitialization()
 
 void Tracking::MonocularInitialization()
 {
-    LOG_SCOPE("Initialization")
     if(!mpInitializer)
     {
         // Set Reference Frame
@@ -821,7 +808,6 @@ void Tracking::CreateInitialMapMonocular()
 
     mState=OK;
 
-    DLOG(STATUS) << "Initialization OK!";
 }
 
 void Tracking::CheckReplacedInLastFrame()
@@ -1485,7 +1471,6 @@ void Tracking::UpdateLocalKeyFrames()
 
 bool Tracking::Relocalization()
 {
-    LOG_SCOPE("Relocalization")
     DLOG_IF(INFO, mVisualizeRelocalization()) << "+++++++++++++++++++++++++++++++++++++++++++"
                                         << " RELOCALIZATION";
     // Compute Bag of Words Vector
@@ -1682,7 +1667,6 @@ bool Tracking::Relocalization()
     {
         mnLastRelocFrameId = mCurrentFrame.mnId;
         DLOG_IF(INFO, mVisualizeRelocalization()) << "Relocalization successful.";
-        DLOG(STATUS) << "Relocalization OK!";
         return true;
     }
 
