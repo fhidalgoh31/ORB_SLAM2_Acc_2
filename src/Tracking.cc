@@ -632,8 +632,8 @@ void Tracking::MonocularInitialization()
 {
     auto visualizeInitializationPt = ParameterManager::getParameter<bool>(ParameterGroup::VISUAL, "Show Init.");
     bool visualizeInitialization = visualizeInitializationPt->getValue();
-    DLOG_IF(INFO, mVisualizeTracking()) << "&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&"
-                                        << " INITIALIZATION";
+    DLOG_IF(INFO, visualizeInitialization) << "&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&"
+                                           << " INITIALIZATION";
     if(!mpInitializer)
     {
         // Set Reference Frame
