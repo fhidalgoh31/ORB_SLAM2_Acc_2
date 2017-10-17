@@ -680,7 +680,7 @@ void Tracking::MonocularInitialization()
         // and initialization doesn't need to run, would save computation power while not moving
 
         // Check if there are enough correspondences
-        if(nmatches<100) //param
+        if(nmatches<50) //param
         {
             DLOG_IF(INFO, visualizeInitialization) << "Init failed, only " << nmatches
                                                    << " matches found between current and reference"
@@ -772,7 +772,7 @@ void Tracking::CreateInitialMapMonocular()
     float medianDepth = pKFini->ComputeSceneMedianDepth(2);
     float invMedianDepth = 1.0f/medianDepth;
 
-    if(medianDepth<0 || pKFcur->TrackedMapPoints(1)<100) //param
+    if(medianDepth<0 || pKFcur->TrackedMapPoints(1)<50) //param
     {
         cout << "Wrong initialization, reseting..." << endl;
         Reset();

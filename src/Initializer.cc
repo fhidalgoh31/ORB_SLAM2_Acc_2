@@ -767,7 +767,7 @@ bool Initializer::ReconstructH(vector<bool> &vbMatchesInliers, cv::Mat &H21, cv:
     }
 
 
-    if(secondBestGood<0.75*bestGood && bestParallax>=minParallax && bestGood>minTriangulated && bestGood>0.9*N) //param
+    if(bestGood>0.9*secondBestGood && bestParallax>=minParallax && bestGood>minTriangulated && bestGood>0.9*N) //param
     {
         vR[bestSolutionIdx].copyTo(R21);
         vt[bestSolutionIdx].copyTo(t21);
@@ -779,7 +779,7 @@ bool Initializer::ReconstructH(vector<bool> &vbMatchesInliers, cv::Mat &H21, cv:
 
     DLOG_IF(INFO, visualizeInitialization()) << "Initialization failed because quality of motion hypothesis was too low.";
     DLOG_IF(INFO, visualizeInitialization()) << "Causes are marked by a \"true\": "
-        << "\n    Second best hyp. has more than 3/4 of inliers than best hyp.: " << (secondBestGood>=0.75*bestGood)
+        << "\n    Second best hyp. has more than 0.9 of inliers than best hyp.: " << (secondBestGood>=0.9*bestGood)
         << ", -> Best = "                                                   << bestGood     << ", second best = "  << secondBestGood
         << "\n    Too little parallax:                                          " << (bestParallax<minParallax)
         << ", -> Parallax = "                                               << bestParallax << ", min Parallax = " << minParallax
