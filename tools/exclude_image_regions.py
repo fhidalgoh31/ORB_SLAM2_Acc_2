@@ -9,13 +9,9 @@ import re
 from copy import deepcopy
 
 boxes = []
-global img
 img = None
-global changed_img
 changed_img = None
-global sbox
 sbox = None
-global ebox
 ebox = None
 
 
@@ -24,12 +20,12 @@ def save_boxes_to(boxes, output_yaml):
         content = yaml_file.read()
         # check if there are regions in the file already and erase them
         # if necessary
-        matches = re.findall(r'ORBextractor.ExcludedRegions: .*', content)
+        matches = re.findall('\nORBextractor.ExcludedRegions: .*', content)
         if len(matches) > 0:
             print("Substituting previous regions.")
-            content = re.sub(r'ORBextractor.ExcludedRegions: .*', '', content)
+            content = re.sub('\nORBextractor.ExcludedRegions: .*', '', content)
 
-    content += "ORBextractor.ExcludedRegions: {}".format(boxes)
+    content += "\nORBextractor.ExcludedRegions: {}".format(boxes)
 
     with open(output_yaml, 'w') as yaml_file:
         yaml_file.write(content)
@@ -51,12 +47,12 @@ def on_mouse(event, x, y, flags, params):
         x = changed_img.shape[1]
 
     if event == cv2.EVENT_LBUTTONDOWN:
-        print 'Start Mouse Position: '+str(x)+', '+str(y)
+        print('Start Mouse Position: '+str(x)+', '+str(y))
         global sbox
         sbox = (x, y)
 
     elif event == cv2.EVENT_LBUTTONUP:
-        print 'End Mouse Position: '+str(x)+', '+str(y)
+        print('End Mouse Position: '+str(x)+', '+str(y))
         global ebox
         global img
         ebox = (x, y)
