@@ -535,11 +535,19 @@ bool Initializer::ReconstructF(vector<bool> &vbMatchesInliers, cv::Mat &F21, cv:
     // If there is not a clear winner or not enough triangulated points reject initialization
     if(maxGood<nMinGood || nsimilar>1) //param
     {
-        DLOG_IF(INFO, visualizeInitialization()) << "Initialization failed because no hypotheses was"
-                                                 << "clearly better than the others or not"
-                                                 << " achieved minimum amount of points triangulated.";
-        DLOG_IF(INFO, visualizeInitialization()) << "maxGood<nMinGood || nsimilar>1: " << maxGood
-                                                 << "<" << nMinGood << " || " << nsimilar << ">1";
+        if (visualizeInitialization())
+        {
+            DLOG_IF(INFO, visualizeInitialization()) << "Initialization failed because:";
+            if(maxGood<nMinGood)
+            {
+                DLOG_IF(INFO, visualizeInitialization()) << "Only " << maxGood << " inliers found."
+                                                         << " Need " << nMinGood;
+            }
+            if(nsimilar>1)
+            {
+                DLOG_IF(INFO, visualizeInitialization()) << "No hypothesis was clearly better than the others";
+            }
+        }
         return false;
     }
 
@@ -557,8 +565,8 @@ bool Initializer::ReconstructF(vector<bool> &vbMatchesInliers, cv::Mat &F21, cv:
         }
         DLOG_IF(INFO, visualizeInitialization()) << "Initialization failed because there wasn't"
                                                  << " enough parallax.";
-        DLOG_IF(INFO, visualizeInitialization()) << "parallax1>minParallax: " << parallax1
-                                                 << "<" << minParallax ;
+        DLOG_IF(INFO, visualizeInitialization()) << "Parallax: " << parallax1
+                                                 << ", minimum parallax: " << minParallax ;
     }else if(maxGood==nGood2)
     {
         if(parallax2>minParallax) //param
@@ -572,8 +580,8 @@ bool Initializer::ReconstructF(vector<bool> &vbMatchesInliers, cv::Mat &F21, cv:
         }
         DLOG_IF(INFO, visualizeInitialization()) << "Initialization failed because there wasn't "
                                                  << "enough parallax.";
-        DLOG_IF(INFO, visualizeInitialization()) << "parallax2>minParallax: " << parallax2
-                                                 << "<" << minParallax ;
+        DLOG_IF(INFO, visualizeInitialization()) << "Parallax: " << parallax2
+                                                 << ", minimum parallax: " << minParallax ;
     }else if(maxGood==nGood3)
     {
         if(parallax3>minParallax) //param
@@ -587,8 +595,8 @@ bool Initializer::ReconstructF(vector<bool> &vbMatchesInliers, cv::Mat &F21, cv:
         }
         DLOG_IF(INFO, visualizeInitialization()) << "Initialization failed because there wasn't "
                                                  << "enough parallax.";
-        DLOG_IF(INFO, visualizeInitialization()) << "parallax3>minParallax: " << parallax3
-                                                 << "<" << minParallax ;
+        DLOG_IF(INFO, visualizeInitialization()) << "Parallax: " << parallax3
+                                                 << ", minimum parallax: " << minParallax ;
     }else if(maxGood==nGood4)
     {
         if(parallax4>minParallax) //param
@@ -602,8 +610,8 @@ bool Initializer::ReconstructF(vector<bool> &vbMatchesInliers, cv::Mat &F21, cv:
         }
         DLOG_IF(INFO, visualizeInitialization()) << "Initialization failed because there wasn't "
                                                  << "enough parallax.";
-        DLOG_IF(INFO, visualizeInitialization()) << "parallax4>minParallax: " << parallax4
-                                                 << "<" << minParallax ;
+        DLOG_IF(INFO, visualizeInitialization()) << "Parallax: " << parallax4
+                                                 << ", minimum parallax: " << minParallax ;
     }
 
     return false;
@@ -770,15 +778,15 @@ bool Initializer::ReconstructH(vector<bool> &vbMatchesInliers, cv::Mat &H21, cv:
     }
 
     DLOG_IF(INFO, visualizeInitialization()) << "Initialization failed because quality of motion hypothesis was too low.";
-    DLOG_IF(INFO, visualizeInitialization()) << "Causes are marked by a \"1\": "
-        << "\n    Best not 0.75 times better than second best: " << (secondBestGood<0.75*bestGood)
-                  << ", -> secondBestGood = " << secondBestGood << ", bestGood = "        << bestGood
-        << "\n    Too little parallax:                         " << (bestParallax>=minParallax)
-                  << ", -> bestParallax = "   << bestParallax   << ", minParallax = "     << minParallax
-        << "\n    Not enough well triangulated points:         " << (bestGood>minTriangulated)
-                  << ", -> bestGood = "       << bestGood       << ", minTriangulated = " << minTriangulated
-        << "\n    Not enough inliers triangulated:             " << (bestGood>0.9*N)
-                  << ", -> bestGood = "       << bestGood       << ", 0.9*N = "           << N;
+    DLOG_IF(INFO, visualizeInitialization()) << "Causes are marked by a \"true\": "
+        << "\n    Second best hyp. has more than 3/4 of inliers than best hyp.: " << (secondBestGood>=0.75*bestGood)
+        << ", -> Best = "                                                   << bestGood     << ", second best = "  << secondBestGood
+        << "\n    Too little parallax:                                          " << (bestParallax<minParallax)
+        << ", -> Parallax = "                                               << bestParallax << ", min Parallax = " << minParallax
+        << "\n    Not enough well triangulated points:                          " << (bestGood<minTriangulated)
+        << ", -> Found = "                                                  << bestGood     << ", minimum = "      << minTriangulated
+        << "\n    Not enough inliers triangulated:                              " << (bestGood<=0.9*N)
+        << ", -> Found = "                                                  << bestGood     << ", minimum = "      << 0.9*N;
     return false;
 }
 

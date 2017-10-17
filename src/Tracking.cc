@@ -643,11 +643,16 @@ void Tracking::StereoInitialization()
 void Tracking::MonocularInitialization()
 {
     LOG_SCOPE("Initialization")
+    auto visualizeInitializationPt = ParameterManager::getParameter<bool>(ParameterGroup::VISUAL, "Show Init.");
+    bool visualizeInitialization = visualizeInitializationPt->getValue();
+    DLOG_IF(INFO, mVisualizeTracking()) << "&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&"
+                                        << " INITIALIZATION";
     if(!mpInitializer)
     {
         // Set Reference Frame
         if(mCurrentFrame.mvKeys.size()>100) //param
         {
+            DLOG_IF(INFO, visualizeInitialization) << "Creating new reference frame.";
             mInitialFrame = Frame(mCurrentFrame);
             mLastFrame = Frame(mCurrentFrame);
             mvbPrevMatched.resize(mCurrentFrame.mvKeysUn.size());
@@ -663,12 +668,14 @@ void Tracking::MonocularInitialization()
 
             return;
         }
+        DLOG_IF(INFO, visualizeInitialization) << "Init failed, too little features in frame.";
     }
     else
     {
         // Try to initialize
         if((int)mCurrentFrame.mvKeys.size()<=100) //param
         {
+            DLOG_IF(INFO, visualizeInitialization) << "Init failed, too little features in frame.";
             delete mpInitializer;
             mpInitializer = static_cast<Initializer*>(NULL);
             fill(mvIniMatches.begin(),mvIniMatches.end(),-1);
@@ -688,6 +695,9 @@ void Tracking::MonocularInitialization()
         // Check if there are enough correspondences
         if(nmatches<100) //param
         {
+            DLOG_IF(INFO, visualizeInitialization) << "Init failed, only " << nmatches
+                                                   << " matches found between current and reference"
+                                                   << " frame. Need at least 100.";
             delete mpInitializer;
             mpInitializer = static_cast<Initializer*>(NULL);
             return;
