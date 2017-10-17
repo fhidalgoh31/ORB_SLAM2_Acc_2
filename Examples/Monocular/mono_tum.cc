@@ -27,10 +27,7 @@
 #include <fstream>
 #include <chrono>
 
-#include <glog/logging.h>
 #include <opencv2/core/core.hpp>
-
-
 
 using namespace std;
 
@@ -44,10 +41,6 @@ int main(int argc, char **argv)
         cerr << endl << "Usage: ./mono_tum path_to_vocabulary path_to_settings path_to_sequence" << endl;
         return 1;
     }
-
-    // initialize glog
-    FLAGS_logtostderr = 1;
-    google::InitGoogleLogging(argv[0]);
     DLOG(INFO) << "Logging is active.";
 
     // Retrieve paths to images
@@ -57,6 +50,7 @@ int main(int argc, char **argv)
     LoadImages(strFile, vstrImageFilenames, vTimestamps);
 
     int nImages = vstrImageFilenames.size();
+    ORB_SLAM2::SystemLogger::totalFrameCount = nImages;
 
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
     ORB_SLAM2::System SLAM(argv[1],argv[2],ORB_SLAM2::System::MONOCULAR,true);
@@ -78,6 +72,8 @@ int main(int argc, char **argv)
     cv::Mat im;
     for(int ni=0; ni<nImages; ni++)
     {
+        ORB_SLAM2::SystemLogger::currentFrameNum = ni + 1;
+
         // Read image from file
         im = cv::imread(string(argv[3])+"/"+vstrImageFilenames[ni],CV_LOAD_IMAGE_UNCHANGED);
         double tframe = vTimestamps[ni];

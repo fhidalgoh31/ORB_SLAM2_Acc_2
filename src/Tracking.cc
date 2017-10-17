@@ -2,7 +2,7 @@
 * This file is part of ORB-SLAM2.
 *
 * Copyright (C) 2014-2016 Raúl Mur-Artal <raulmur at unizar dot es> (University of Zaragoza)
-* For more information see <https://github.com/raulmur/ORB_SLAM2>
+* For more Information see <https://github.com/raulmur/ORB_SLAM2>
 *
 * ORB-SLAM2 is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,6 @@
 
 #include<opencv2/core/core.hpp>
 #include<opencv2/features2d/features2d.hpp>
-#include <glog/logging.h>
 
 #include"ORBmatcher.h"
 #include"FrameDrawer.h"
@@ -322,7 +321,7 @@ void Tracking::Track()
     else
     {
         // System is initialized. Track Frame.
-        bool bOK;
+        bool bOK = false;
 
         if(mVisualizeTracking())
         {
@@ -347,32 +346,36 @@ void Tracking::Track()
         // Initial camera pose estimation using motion model or relocalization (if tracking is lost)
         if(!mbOnlyTracking)
         {
-            // Local Mapping is activated. This is the normal behaviour, unless
-            // you explicitly activate the "only tracking" mode.
-
-            if(mState==OK && !mTriggerRelocalization.checkAndResetIfChanged())
+            // Trigger relocalization button will cause to jump over this block
+            // leading to a LOST state further below
+            if(!mTriggerRelocalization.checkAndResetIfChanged())
             {
-                DLOG_IF(INFO, mVisualizeTracking()) << "==========================================="
-                                                    << " TRACKING";
-                // Local Mapping might have changed some MapPoints tracked in last frame
-                CheckReplacedInLastFrame();
-
-                if(mVelocity.empty() || mCurrentFrame.mnId<mnLastRelocFrameId+2)
+                // Local Mapping is activated. This is the normal behaviour, unless
+                // you explicitly activate the "only tracking" mode.
+                if(mState==OK)
                 {
-                    DLOG_IF(INFO, mVisualizeTracking()) << "Tracking NOT using motion model.";
-                    bOK = TrackReferenceKeyFrame();
+                    DLOG_IF(INFO, mVisualizeTracking()) << "==========================================="
+                                                        << " TRACKING";
+                    // Local Mapping might have changed some MapPoints tracked in last frame
+                    CheckReplacedInLastFrame();
+
+                    if(mVelocity.empty() || mCurrentFrame.mnId<mnLastRelocFrameId+2)
+                    {
+                        DLOG_IF(INFO, mVisualizeTracking()) << "Tracking NOT using motion model.";
+                        bOK = TrackReferenceKeyFrame();
+                    }
+                    else
+                    {
+                        DLOG_IF(INFO, mVisualizeTracking()) << "Tracking using motion model.";
+                        bOK = TrackWithMotionModel();
+                        if(!bOK)
+                            bOK = TrackReferenceKeyFrame();
+                    }
                 }
                 else
                 {
-                    DLOG_IF(INFO, mVisualizeTracking()) << "Tracking using motion model.";
-                    bOK = TrackWithMotionModel();
-                    if(!bOK)
-                        bOK = TrackReferenceKeyFrame();
+                    bOK = Relocalization();
                 }
-            }
-            else
-            {
-                bOK = Relocalization();
             }
         }
         else
@@ -468,9 +471,13 @@ void Tracking::Track()
         }
 
         if(bOK)
+        {
             mState = OK;
-        else
+        }
+        else if (mState!=LOST)
+        {
             mState=LOST;
+        }
 
         // Update drawer
         mpFrameDrawer->Update(this);
@@ -546,7 +553,7 @@ void Tracking::Track()
         mLastFrame = Frame(mCurrentFrame);
     }
 
-    // Store frame pose information to retrieve the complete camera trajectory afterwards.
+    // Store frame pose Information to retrieve the complete camera trajectory afterwards.
     if(!mCurrentFrame.mTcw.empty())
     {
         cv::Mat Tcr = mCurrentFrame.mTcw*mCurrentFrame.mpReferenceKF->GetPoseInverse();
@@ -810,6 +817,7 @@ void Tracking::CreateInitialMapMonocular()
     mpMap->mvpKeyFrameOrigins.push_back(pKFini);
 
     mState=OK;
+
 }
 
 void Tracking::CheckReplacedInLastFrame()
@@ -1511,7 +1519,7 @@ bool Tracking::Relocalization()
     //TODO : if last velocities were known this could check keyframes in an area
     //that increases with time relative to the last known velocity
     //might avoid relocalizations somwhere completely different and reduce search cost
-    //heading info from imu would also help to exclude keyframes
+    //heading INFO from imu would also help to exclude keyframes
 
     //search matches between the candidate keyframes' mappoints and current frames keypoints
     //TODO : One could probably filter all candidates which track less than 50 map points, since in
@@ -1667,8 +1675,8 @@ bool Tracking::Relocalization()
     }
     else
     {
-        DLOG_IF(INFO, mVisualizeRelocalization()) << "Relocalization successful.";
         mnLastRelocFrameId = mCurrentFrame.mnId;
+        DLOG_IF(INFO, mVisualizeRelocalization()) << "Relocalization successful.";
         return true;
     }
 
@@ -1676,7 +1684,6 @@ bool Tracking::Relocalization()
 
 void Tracking::Reset()
 {
-
     cout << "System Reseting" << endl;
     if(mpViewer)
     {
