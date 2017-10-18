@@ -22,7 +22,6 @@
 #include "Converter.h"
 #include "ORBmatcher.h"
 #include <thread>
-#include <glog/logging.h>
 
 namespace ORB_SLAM2
 {

@@ -26,7 +26,6 @@
 #include<opencv2/features2d/features2d.hpp>
 
 #include "Thirdparty/DBoW2/DBoW2/FeatureVector.h"
-#include <glog/logging.h>
 
 #include<stdint-gcc.h>
 
