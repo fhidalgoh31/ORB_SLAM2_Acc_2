@@ -1728,6 +1728,7 @@ void Tracking::Reset()
 
     KeyFrame::nNextId = 0;
     Frame::nNextId = 0;
+    mnLastRelocFrameId = 0;
     mState = NO_IMAGES_YET;
 
     if(mpInitializer)
