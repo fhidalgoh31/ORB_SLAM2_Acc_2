@@ -193,6 +193,34 @@ void Viewer::Run()
     bool bFollow = true;
     bool bLocalizationMode = false;
 
+    // move around with keyboard
+    float step = 0.2;
+
+    auto moveCameraForward = [&]{
+        auto viewMatrix = s_cam.GetModelViewMatrix();
+        viewMatrix(2, 3) += step;
+        s_cam.SetModelViewMatrix(viewMatrix);
+    };
+    auto moveCameraBackward = [&]{
+        auto viewMatrix = s_cam.GetModelViewMatrix();
+        viewMatrix(2, 3) -= step;
+        s_cam.SetModelViewMatrix(viewMatrix);
+    };
+    auto moveCameraLeft = [&]{
+        auto viewMatrix = s_cam.GetModelViewMatrix();
+        viewMatrix(0, 3) += step;
+        s_cam.SetModelViewMatrix(viewMatrix);
+    };
+    auto moveCameraRight = [&]{
+        auto viewMatrix = s_cam.GetModelViewMatrix();
+        viewMatrix(0, 3) -= step;
+        s_cam.SetModelViewMatrix(viewMatrix);
+    };
+    pangolin::RegisterKeyPressCallback('w', moveCameraForward);
+    pangolin::RegisterKeyPressCallback('s', moveCameraBackward);
+    pangolin::RegisterKeyPressCallback('a', moveCameraLeft);
+    pangolin::RegisterKeyPressCallback('d', moveCameraRight);
+
     cv::namedWindow("ORB-SLAM2: Current Frame", CV_WINDOW_NORMAL);
     while(1)
     {
