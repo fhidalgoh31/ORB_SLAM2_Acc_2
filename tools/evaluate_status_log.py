@@ -2,7 +2,7 @@ import argparse
 import logging
 import matplotlib
 matplotlib.use("Agg")
-#  matplotlib.rcParams.update({'font.size': 5})
+matplotlib.rcParams.update({'font.size': 9})
 import matplotlib.pyplot as plt
 import matplotlib.lines as lines
 import os
