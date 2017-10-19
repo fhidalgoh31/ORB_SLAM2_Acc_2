@@ -682,6 +682,8 @@ void Tracking::MonocularInitialization()
         // Check if there are enough correspondences
         if(nmatches<100) //param
         {
+            //TODO : This wastes a full frame by deleteing reference frame and taking next frame as
+            // new reference, could also take current frame as new reference and match against next one
             DLOG_IF(INFO, visualizeInitialization) << "Init failed, only " << nmatches
                                                    << " matches found between current and reference"
                                                    << " frame. Need at least 100.";
