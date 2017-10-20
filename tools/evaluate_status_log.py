@@ -1,4 +1,5 @@
 import argparse
+import json
 import logging
 import matplotlib
 matplotlib.use("Agg")
@@ -129,6 +130,19 @@ class OrbSlamSession(object):
         return self.get_frames_tracked()/float(self.total_frame_count)
 
 
+    def get_times_tracking_lost(self):
+        """
+        Returns the amount of times tracking was lost.
+        """
+        lost_counter = 0
+        last_event = "Start"
+        for event in self.events:
+            if event.event_type == "Lost" and last_event != "Lost":
+                lost_counter += 1
+            last_event = event.event_type
+        return lost_counter
+
+
     def plot_timeline(self, output_path):
         """
         Plots a timeline showing all events and colouring the stretches inbetween.
@@ -244,20 +258,35 @@ def main():
                                          + " plot which shows when which events (loops found etc.)"
                                          + " happend during a session.",
                                          formatter_class=argparse.RawTextHelpFormatter)
-    arg_parser.add_argument("input_path", help="Path to orb_slam_status.log")
+    arg_parser.add_argument("input_path", help="Path to results")
     args = arg_parser.parse_args()
 
     input_path = args.input_path
 
-    # check if input is a file
-    if not os.path.isfile(input_path):
-        print("Input needs to be a log file. \"{}\" is not a file.".format(input_path))
+    # get all logs in file
+    if input_path.endswith(".log"):
+        orb_logs = [input_path]
+    else:
+        orb_logs = [file for file in os.listdir(input_path) if file.endswith(".log")]
 
-    # create OrbSlamSession object which interprets the log
-    session = OrbSlamSession(input_path)
-    logger.info("Amount frames tracked: {} that's {}%".format(session.get_frames_tracked()
-                                                             ,session.get_ratio_tracked()*100))
-    session.plot_timeline("status_line.pdf")
+    # create OrbSlamSession object which interprets the log for each log
+    tracked_ratios = []
+    times_lost = []
+    for i, log in enumerate(orb_logs):
+        session = OrbSlamSession(log)
+        logger.info("Amount frames tracked: {} that's {}%".format(session.get_frames_tracked()
+                                                                 ,session.get_ratio_tracked()*100))
+        session.plot_timeline("status_line_{}.pdf".format(i))
+        tracked_ratios.append(session.get_ratio_tracked() * 100)
+        times_lost.append(session.get_times_tracking_lost())
+
+    logger.info("Avg. tracked frames: {}, Avg. times lost: {}"\
+            .format(sum(tracked_ratios)/len(tracked_ratios),
+                    sum(times_lost)/len(times_lost)))
+
+    # save information in json
+    with open("results.json", 'w') as file:
+        json.dump({"tracked_ratios": tracked_ratios, "times_lost": times_lost}, file, indent=4)
 
 if __name__ == '__main__':
     main()
