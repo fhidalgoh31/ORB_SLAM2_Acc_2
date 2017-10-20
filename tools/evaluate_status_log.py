@@ -143,69 +143,6 @@ class OrbSlamSession(object):
         return lost_counter
 
 
-    def plot_timeline(self, output_path):
-        """
-        Plots a timeline showing all events and colouring the stretches inbetween.
-        """
-        seperator_events = ('Init', 'Lost', 'Reset', 'Reloc', 'Done')
-
-        def cm2inch(*tupl):
-            inch = 2.54
-            if isinstance(tupl[0], tuple):
-                return tuple(i/inch for i in tupl[0])
-            else:
-                return tuple(i/inch for i in tupl)
-
-        fig = plt.figure(figsize=cm2inch(20, 0.5))
-        ax = fig.add_subplot(111)
-        ax.yaxis.set_visible(False)
-        ax.spines['right'].set_visible(False)
-        ax.spines['left'].set_visible(False)
-        ax.spines['top'].set_visible(False)
-        ax.xaxis.set_ticks_position('bottom')
-        ax.set_xlim([0, self.total_frame_count])
-        #  ax.set_aspect(100)
-        ax.set_xlabel("Frame")
-
-        start = 0
-        last_seperator_event_type = 'Start'
-        for event in self.events:
-            if event.event_type in seperator_events:
-                end = event.frame_number
-                x = range(start, end)
-                logger.debug("Filling between {} and {}".format(x[0], x[-1]))
-                if last_seperator_event_type in ('Init', 'Reloc'):
-                    # tracking
-                    color = 'green'
-                elif last_seperator_event_type == 'Lost':
-                    # relocalizing
-                    color = 'red'
-                elif last_seperator_event_type in ('Start', 'Reset'):
-                    # initializing
-                    color = 'yellow'
-                logger.debug("With color {}".format(color))
-
-                ax.fill_between(x, 0, 1, color=color)
-                #  line = lines.Line2D([end-5, end-5], [0, 1], linewidth=0.05, color = 'black')
-                #  ax.add_line(line)
-
-                start = end
-                if event.event_type == 'Lost':
-                    start = start - 1
-                last_seperator_event_type = event.event_type
-
-            # draw an R for a reset
-            if event.event_type == 'Reset':
-                ax.text(event.frame_number, 1.2, "R", size='xx-small', horizontalalignment='center')
-            # draw an L and a blue line for a Loop
-            elif event.event_type == 'Loop':
-                ax.text(event.frame_number, 1.2, "L", size='xx-small', horizontalalignment='center')
-                line = lines.Line2D([event.frame_number, event.frame_number], [0, 1], linewidth=0.2,
-                                    color = 'blue')
-                ax.add_line(line)
-
-        plt.savefig(output_path, bbox_inches='tight', pad_inches=0)
-        logger.info("Plot saved to: {}".format(output_path))
 
 
 ####################################################################################################
@@ -251,6 +188,69 @@ class OrbSlamEvent(object):
 
 
 ####################################################################################################
+def plot_timeline(session, output_path):
+    """
+    Plots a timeline showing all events and colouring the stretches inbetween.
+    """
+    seperator_events = ('Init', 'Lost', 'Reset', 'Reloc', 'Done')
+
+    def cm2inch(*tupl):
+        inch = 2.54
+        if isinstance(tupl[0], tuple):
+            return tuple(i/inch for i in tupl[0])
+        else:
+            return tuple(i/inch for i in tupl)
+
+    fig = plt.figure(figsize=cm2inch(20, 0.5))
+    ax = fig.add_subplot(111)
+    ax.yaxis.set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.spines['left'].set_visible(False)
+    ax.spines['top'].set_visible(False)
+    ax.xaxis.set_ticks_position('bottom')
+    ax.set_xlim([0, session.total_frame_count])
+    #  ax.set_aspect(100)
+    ax.set_xlabel("Frame")
+
+    start = 0
+    last_seperator_event_type = 'Start'
+    for event in session.events:
+        if event.event_type in seperator_events:
+            end = event.frame_number
+            x = range(start, end)
+            logger.debug("Filling between {} and {}".format(x[0], x[-1]))
+            if last_seperator_event_type in ('Init', 'Reloc'):
+                # tracking
+                color = 'green'
+            elif last_seperator_event_type == 'Lost':
+                # relocalizing
+                color = 'red'
+            elif last_seperator_event_type in ('Start', 'Reset'):
+                # initializing
+                color = 'yellow'
+            logger.debug("With color {}".format(color))
+
+            ax.fill_between(x, 0, 1, color=color)
+            #  line = lines.Line2D([end-5, end-5], [0, 1], linewidth=0.05, color = 'black')
+            #  ax.add_line(line)
+
+            start = end
+            if event.event_type == 'Lost':
+                start = start - 1
+            last_seperator_event_type = event.event_type
+
+        # draw an R for a reset
+        if event.event_type == 'Reset':
+            ax.text(event.frame_number, 1.2, "R", size='xx-small', horizontalalignment='center')
+        # draw an L and a blue line for a Loop
+        elif event.event_type == 'Loop':
+            ax.text(event.frame_number, 1.2, "L", size='xx-small', horizontalalignment='center')
+            line = lines.Line2D([event.frame_number, event.frame_number], [0, 1], linewidth=0.2,
+                                color = 'blue')
+            ax.add_line(line)
+
+    plt.savefig(output_path, bbox_inches='tight', pad_inches=0)
+    logger.info("Plot saved to: {}".format(output_path))
 
 def main():
     # parse command line arguments
@@ -276,7 +276,7 @@ def main():
         session = OrbSlamSession(log)
         logger.info("Amount frames tracked: {} that's {}%".format(session.get_frames_tracked()
                                                                  ,session.get_ratio_tracked()*100))
-        session.plot_timeline("status_line_{}.pdf".format(i))
+        plot_timeline(session, "status_line_{}.pdf".format(i))
         tracked_ratios.append(session.get_ratio_tracked() * 100)
         times_lost.append(session.get_times_tracking_lost())
 
