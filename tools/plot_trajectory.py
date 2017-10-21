@@ -48,7 +48,7 @@ else:
     ax  = fig.gca(projection='3d')
 
     ax._axis3don = False
-    scatter = ax.scatter(x_coords, y_coords, z_coords, c=time, cmap='gray')
+    scatter = ax.scatter(x_coords, y_coords, z_coords, c=time, cmap='jet')
 
 plt.colorbar(scatter)
 plt.show()
