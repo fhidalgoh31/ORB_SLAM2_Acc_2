@@ -96,8 +96,12 @@ class OrbSlamSession(object):
                         # ignore this, double reset can happen when initialization fails
                         pass
                     elif end is None:
-                        # end - 1 because the frame were it's lost wasn't tracked
-                        end = event.frame_number - 1
+                        if start is None:
+                            # ignore initialization resets
+                            pass
+                        else:
+                            # end - 1 because the frame were it's lost wasn't tracked
+                            end = event.frame_number - 1
                     else:
                         raise Exception("Double end in get_frames_tracked()!")
 
@@ -267,7 +271,7 @@ def main():
     if input_path.endswith(".log"):
         orb_logs = [input_path]
     else:
-        orb_logs = [file for file in os.listdir(input_path) if file.endswith(".log")]
+        orb_logs = [input_path + file for file in os.listdir(input_path) if file.endswith(".log")]
 
     # create OrbSlamSession object which interprets the log for each log
     tracked_ratios = []
