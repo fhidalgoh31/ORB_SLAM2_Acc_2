@@ -86,7 +86,7 @@ void Viewer::Run()
     pangolin::Var<bool> menuShowGraph("menu.Show Graph",true,true);
     pangolin::Var<bool> menuLocalizationMode("menu.Localization Mode",false,true);
     pangolin::Var<bool> menuReset("menu.Reset",false,false);
-    ParameterManager::createPangolinEntries("menu", ParameterGroup::VISUAL);
+    ParameterManager::createPangolinEntries("menu", ParameterGroup::MAIN);
 
     // create the panels for the sub parameters
     std::map<std::string, pangolin::View*> subPanels;
@@ -170,7 +170,7 @@ void Viewer::Run()
     pangolin::Var<std::function<void(void)>> relocalizationButton("parameters.Relocalization", toggleFunctionMap["relocalization"]);
     pangolin::Var<std::function<void(void)>> localMappingButton("parameters.Local mapping", toggleFunctionMap["localMapping"]);
     pangolin::Var<std::function<void(void)>> loopClosingButton("parameters.Loop closing", toggleFunctionMap["loopClosing"]);
-    ParameterManager::createPangolinEntries("parameters", ParameterGroup::GENERAL);
+    ParameterManager::createPangolinEntries("parameters", ParameterGroup::PARAMETER);
     parameterPanel.ToggleShow();
 
     // open parameter pane when pressing Ctrl+p

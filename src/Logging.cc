@@ -1,4 +1,4 @@
-#include "Debug.h"
+#include "Logging.h"
 
 #include <boost/make_shared.hpp>
 #include <boost/shared_ptr.hpp>
@@ -52,38 +52,38 @@ BOOST_LOG_GLOBAL_LOGGER_INIT(sys_lg, src::severity_logger_mt<LogLevel>) {
        // Construct the sinks
     typedef sinks::synchronous_sink< sinks::text_ostream_backend > text_sink;
     boost::shared_ptr< text_sink > console_sink = boost::make_shared< text_sink >();
-    boost::shared_ptr< text_sink > status_sink = boost::make_shared< text_sink >();
+    // boost::shared_ptr< text_sink > status_sink = boost::make_shared< text_sink >();
 
     // Add a stream to write log to
-    status_sink->locked_backend()->add_stream(boost::make_shared< std::ofstream >(kStatusLogFile));
+    // status_sink->locked_backend()->add_stream(boost::make_shared< std::ofstream >(mkStatusLogFile));
 
     //Tell it to write directly instead of when the object goes out of scope
-    status_sink->locked_backend()->auto_flush(true);
+    // status_sink->locked_backend()->auto_flush(true);
 
     // We have to provide an empty deleter to avoid destroying the global stream object
     boost::shared_ptr< std::ostream > stream(&std::clog, logging::empty_deleter());
     console_sink->locked_backend()->add_stream(stream);
 
     // Register the sinks in the logging core
-    logging::core::get()->add_sink(status_sink);
     logging::core::get()->add_sink(console_sink);
+    // logging::core::get()->add_sink(status_sink);
 
     // specify the format of the log messages
     logging::formatter formatter = expr::stream
         << "[" << level << "]"
         << "<" << expr::format_named_scope("Scope", boost::log::keywords::format = "%n") << ">"
         << " - " << expr::smessage;
-    logging::formatter status_formatter = expr::stream
-        << "<" << expr::format_named_scope("Scope", boost::log::keywords::format = "%n") << "> "
-        << frameNum << "/" << totalFrames
-        << " - " << expr::smessage;
+    // logging::formatter status_formatter = expr::stream
+    //     << "<" << expr::format_named_scope("Scope", boost::log::keywords::format = "%n") << "> "
+    //     << frameNum << "/" << totalFrames
+    //     << " - " << expr::smessage;
 
     console_sink->set_formatter(formatter);
-    status_sink->set_formatter(status_formatter);
+    // status_sink->set_formatter(status_formatter);
 
     // don't log status messages to console, instead log them to file
-    status_sink->set_filter(level == SystemLogger::LogLevel::STATUS);
     console_sink->set_filter(level != SystemLogger::LogLevel::STATUS);
+    // status_sink->set_filter(level == SystemLogger::LogLevel::STATUS);
 
     return sys_lg;
 }

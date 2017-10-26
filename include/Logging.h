@@ -50,7 +50,7 @@ operator<< ( std::basic_ostream< CharT, TraitsT >& strm, SystemLogger::LogLevel 
 }
 
 // name of the output file
-const std::string kStatusLogFile = "orb_slam_status.log";
+const std::string mkStatusLogFile = "orb_slam_status.log";
 
 // create global logger
 BOOST_LOG_GLOBAL_LOGGER(sys_lg, src::severity_logger_mt<SystemLogger::LogLevel>)

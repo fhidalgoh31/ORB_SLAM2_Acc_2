@@ -416,7 +416,7 @@ ORBextractor::ORBextractor(int _nfeatures, float _scaleFactor, int _nlevels,
          bool initialization)
     : mExcludedRegions(excludedRegions)
     , visualizeExtractor("Show Extraction", false, true,
-            (initialization ? ParameterGroup::UNDEFINED : ParameterGroup::VISUAL), []{})
+            (initialization ? ParameterGroup::UNDEFINED : ParameterGroup::MAIN), []{})
     , nFeatures("Num features", _nfeatures, 0, 5000,
             (initialization ? ParameterGroup::INITIALIZATION : ParameterGroup::ORBEXTRACTOR),
             [&]{UpdateParameters();})
@@ -1138,7 +1138,7 @@ void ORBextractor::operator()( InputArray _image, InputArray _mask, vector<KeyPo
     Mat image = _image.getMat();
     assert(image.type() == CV_8UC1 );
 
-    auto visualizeParam = ParameterManager::getParameter<bool>(ParameterGroup::VISUAL,
+    auto visualizeParam = ParameterManager::getParameter<bool>(ParameterGroup::MAIN,
                                                                "Show Extraction");
     if(visualizeParam)
     {

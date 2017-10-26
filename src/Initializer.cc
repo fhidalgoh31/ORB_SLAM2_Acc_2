@@ -31,7 +31,7 @@ namespace ORB_SLAM2
 {
 
 Parameter<bool> Initializer::visualizeInitialization("Show Init.", false, true,
-        ParameterGroup::VISUAL, []{});
+        ParameterGroup::MAIN, []{});
 
 Initializer::Initializer(const Frame &ReferenceFrame, float sigma, int iterations)
 {

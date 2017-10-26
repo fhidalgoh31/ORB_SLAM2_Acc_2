@@ -51,9 +51,9 @@ Tracking::Tracking(System *pSys, ORBVocabulary* pVoc, FrameDrawer *pFrameDrawer,
     , mnAmountTrackedMapPoints(0)
     , mnAmountTrackedMapPointsKF(0)
     , mnMinMatchesForTracking("Min matches", 15, 0, 500, ParameterGroup::TRACKING, []{})
-    , mTriggerRelocalization("Trigger Relocalization", false, false, ParameterGroup::VISUAL, []{})
-    , mVisualizeTracking("Show Tracking", false, true, ParameterGroup::VISUAL, []{})
-    , mVisualizeRelocalization("Show Relocalization", false, true, ParameterGroup::VISUAL, []{})
+    , mTriggerRelocalization("Trigger Relocalization", false, false, ParameterGroup::MAIN, []{})
+    , mVisualizeTracking("Show Tracking", false, true, ParameterGroup::MAIN, []{})
+    , mVisualizeRelocalization("Show Relocalization", false, true, ParameterGroup::MAIN, []{})
 {
     // Load camera parameters from settings file
 
@@ -630,7 +630,7 @@ void Tracking::StereoInitialization()
 
 void Tracking::MonocularInitialization()
 {
-    auto visualizeInitializationPt = ParameterManager::getParameter<bool>(ParameterGroup::VISUAL, "Show Init.");
+    auto visualizeInitializationPt = ParameterManager::getParameter<bool>(ParameterGroup::MAIN, "Show Init.");
     bool visualizeInitialization = visualizeInitializationPt->getValue();
     DLOG_IF(INFO, visualizeInitialization) << "&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&"
                                            << " INITIALIZATION";

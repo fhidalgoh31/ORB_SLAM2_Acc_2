@@ -89,7 +89,7 @@ void MapDrawer::DrawKeyFrames(const bool bDrawKF, const bool bDrawGraph)
 
     const vector<KeyFrame*> vpKFs = mpMap->GetAllKeyFrames();
     bool showRelocalizaionCandidates =
-        ParameterManager::getParameter<bool>(ParameterGroup::VISUAL, "Show Relocalization")->getValue();
+        ParameterManager::getParameter<bool>(ParameterGroup::MAIN, "Show Relocalization")->getValue();
 
     if(bDrawKF)
     {

@@ -1,7 +1,7 @@
 #ifndef PARAMETER_H
 #define PARAMETER_H
 
-#include "Debug.h"
+#include "Logging.h"
 
 #include <vector>
 #include <pangolin/pangolin.h>
@@ -12,8 +12,8 @@ namespace ORB_SLAM2 {
 
 enum class ParameterGroup
 {
-    GENERAL,
-    VISUAL,
+    PARAMETER,
+    MAIN,
     ORBEXTRACTOR,
     INITIALIZATION,
     TRACKING,
