@@ -37,7 +37,7 @@ The extensions are a result of my work with ORB SLAM during a thesis of mine and
 
 
 ### Added dependencies
-- Boost
+- Boost (tested with 1.54)
 
 ### Known problems
 - Doesn't work with Eigen 3.3, use Eigen 3.1
