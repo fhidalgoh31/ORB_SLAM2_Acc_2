@@ -1,3 +1,49 @@
+# ORB-SLAM2 Accessible
+__NOTE: The following only considers the monocular part of ORB SLAM2. While there are a lot of differences between monocular and RGB-D/Stereo most of the explanations/diagrams and functions should also work for these. So far the functions described are only usable when using the [mono_tum](https://github.com/kafendt/ORB_SLAM2_Accessible/blob/master/Examples/Monocular/mono_tum.cc) executable.__
+
+While working with ORB SLAM2 I noticed that even though it is easy to set up and use it is often hard to
+understand what exactly is happening within the program at any given time. Furthermore even though the papers published by the authors are very well written it isn't straight forward to go ahead and modify the actual code due to lack of documentation.
+
+For these reasons this repository adds the following documentation and usability/convenience functions to ORB SLAM2:
+
+1. a [description](https://github.com/kafendt/ORB_SLAM2_Accessible/raw/master/docs/ORB_description.pdf) of the different modules used in ORB SLAM2 explaining the algorithm a little more in-depth than the original papers.
+
+2. a [diagram](https://github.com/kafendt/ORB_SLAM2_Accessible/raw/master/docs/ORB_Code_activity.pdf) that visualizes the internal workings of the algorithm.
+
+3. a [script](https://github.com/kafendt/ORB_SLAM2_Accessible/blob/master/tools/exclude_image_regions.py) that allows excluding certain image regions from feature extraction (helps when there are parts of the robot that lie within the cameras field of view)
+
+<div style="text-align:center"><img src="https://github.com/kafendt/ORB_SLAM2_Accessible/raw/master/docs/figures/exclude_regions.png" alt="ORB-SLAM2" width="300" height="240" border="10" /></div>
+
+4. separate console logging for each part of the algorithm that can be switched on and off on the fly using the "Show xxxxxxx" buttons.
+
+5. easy creation of parameters that can be adjusted via the UI while the program runs. UI elements are grouped based on the set parameter group. The different panes can be accessed via Ctrl+{a, s, d, f, g, h} or Ctrl+p. See implemented parameters in ORBextractor or Tracking class on how to use them.
+```cpp
+    Parameter<bool>* button = new Parameter<bool>("Do something once", false, false, ParameterGroup::MAIN, []{});
+    Parameter<bool>* toggle = new Parameter<bool>("Switch on/off", false, true, ParameterGroup::MAIN, []{});
+    Parameter<float>* slider = new Parameter<float>("Parameter1", 10, 0, 100, ParameterGroup::LOOP_CLOSING, []{});
+    Parameter<int>* textBox = new Parameter<int>("Parameter2", 10, ParameterGroup::LOOP_CLOSING, []{});
+```
+<div style="text-align:center"><a href="https://github.com/kafendt/ORB_SLAM2_Accessible/raw/master/docs/figures/parameters.png" target="_blank"><img src="https://github.com/kafendt/ORB_SLAM2_Accessible/raw/master/docs/figures/parameters.png" alt="ORB-SLAM2" width="300" height="240" border="10" /></a></div>
+
+6. a pause function which allows to step through a dataset frame by frame.
+
+7. a fast forward function which allows to process a number of images as fast as your computer allows.
+
+8. a button that triggers relocalization (useful to test how well relocalization works in different situations)
+
+9. a [script](https://github.com/kafendt/ORB_SLAM2_Accessible/blob/master/tools/plot_trajectory.py) that allows to plot trajectories saved in KeyFrameTrajectory.txt. Can plot in 3D or 2D (2D result only makes sense if the trajectory was actually in a plane).
+
+The extensions are a result of my work with ORB SLAM during a thesis of mine and definitly aren't perfect. If you do experience crashes or find mistakes please let me know and I will try to fix them.
+
+
+### Added dependencies
+- Boost
+
+### Known problems
+- Doesn't work with Eigen 3.3, use Eigen 3.1
+
+------------------------
+
 # ORB-SLAM2
 **Authors:** [Raul Mur-Artal](http://webdiis.unizar.es/~raulmur/), [Juan D. Tardos](http://webdiis.unizar.es/~jdtardos/), [J. M. M. Montiel](http://webdiis.unizar.es/~josemari/) and [Dorian Galvez-Lopez](http://doriangalvez.com/) ([DBoW2](https://github.com/dorian3d/DBoW2))
 
