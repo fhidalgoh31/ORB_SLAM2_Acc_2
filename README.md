@@ -33,7 +33,7 @@ For these reasons this repository adds the following documentation and usability
 
 9. a [script](https://github.com/kafendt/ORB_SLAM2_Accessible/blob/master/tools/plot_trajectory.py) that allows to plot trajectories saved in KeyFrameTrajectory.txt. Can plot in 3D or 2D (2D result only makes sense if the trajectory was actually in a plane).
 
-The extensions are a result of my work with ORB SLAM during a thesis of mine and definitly aren't perfect. If you do experience crashes or find mistakes please let me know and I will try to fix them.
+The extensions are a result of my work with ORB SLAM during a thesis of mine and definitely aren't perfect. If you do experience crashes or find mistakes please let me know and I will try to fix them.
 
 
 ### Added dependencies
