@@ -26,6 +26,7 @@
 #include <algorithm>
 #include <fstream>
 #include <chrono>
+#include "Parameter.h"
 
 #include <opencv2/core/core.hpp>
 
@@ -51,6 +52,7 @@ int main(int argc, char **argv)
 
     int nImages = vstrImageFilenames.size();
     ORB_SLAM2::SystemLogger::totalFrameCount = nImages;
+    DLOG(STATUS) << "Started!";
 
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
     ORB_SLAM2::System SLAM(argv[1],argv[2],ORB_SLAM2::System::MONOCULAR,true);
@@ -65,13 +67,17 @@ int main(int argc, char **argv)
     cout << "Images in the sequence: " << nImages << endl << endl;
 
     // Main loop
-    pangolin::Var<bool> pause("menu.Pause", false,  true);
+    ORB_SLAM2::Parameter<bool> pause("menu.Pause", false,  true, ORB_SLAM2::ParameterGroup::GENERAL, []{});
     pangolin::Var<bool> nextFrame("menu.Next frame", false, false);
     pangolin::Var<std::string> fastForward("menu.Fast forward", "0");
     int forwardCounter = 0;
     cv::Mat im;
     for(int ni=0; ni<nImages; ni++)
     {
+        if(ni % 10 == 1)
+        {
+            DLOG(STATUS) << "Update!";
+        }
         ORB_SLAM2::SystemLogger::currentFrameNum = ni + 1;
 
         // Read image from file
@@ -99,7 +105,7 @@ int main(int argc, char **argv)
         std::chrono::monotonic_clock::time_point t1 = std::chrono::monotonic_clock::now();
 #endif
         bool frame_played = false;
-        while(pause.Get())
+        while(pause.getValue())
         {
             if(nextFrame.Get())
             {

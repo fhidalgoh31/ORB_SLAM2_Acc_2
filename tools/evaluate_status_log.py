@@ -21,6 +21,8 @@ logger.addHandler(console_handler)
 
 
 event_messages = {
+        "Start" : "Started!",
+        "Update": "Update!",
         "Init"  : "Initialization OK!",
         "Lost"  : "Tracking LOST!",
         "Reloc" : "Relocalization OK!",
@@ -41,7 +43,10 @@ class OrbSlamSession(object):
     """
     def __init__(self, path_to_log):
         self.events = self.__create_events(path_to_log)
-        self.total_frame_count = self.__read_total_frame_count(self.events[0].log_line)
+        if len(self.events) > 0:
+            self.total_frame_count = self.__read_total_frame_count(self.events[0].log_line)
+        else:
+            self.total_frame_count = 0
 
 
     def __create_events(self, path_to_log):
