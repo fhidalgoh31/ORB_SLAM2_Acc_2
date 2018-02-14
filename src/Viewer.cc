@@ -178,20 +178,22 @@ void Viewer::Run()
                                                                           menuPanel.ToggleShow();
                                                                           parameterPanel.ToggleShow();
                                                                       });
+    bool showingMain = true;
     pangolin::RegisterKeyPressCallback(pangolin::PANGO_CTRL + 'k', [&]{
                                                                           menuPanel.ToggleShow();
+                                                                          if(!showingMain)
+                                                                          {
+                                                                              d_cam.SetBounds(0.0, 1.0, pangolin::Attach::Pix(200), 1.0, -1024.0f/768.0f);
+                                                                          }
+                                                                          else
+                                                                          {
+                                                                              d_cam.SetBounds(0.0, 1.0, 0.0, 1.0, -1024.0f/768.0f);
+                                                                          }
+                                                                          showingMain = !showingMain;
                                                                       });
     bool toggle = false;
     pangolin::RegisterKeyPressCallback(pangolin::PANGO_CTRL + 'b', [&]{
             ParameterManager::getParameter<bool>(ParameterGroup::GENERAL, "menu.Pause")->setValue(!toggle);
-            if(toggle)
-            {
-                d_cam.SetBounds(0.0, 1.0, pangolin::Attach::Pix(200), 1.0, -1024.0f/768.0f);
-            }
-            else
-            {
-                d_cam.SetBounds(0.0, 1.0, 0.0, 1.0, -1024.0f/768.0f);
-            }
             toggle = !toggle;
                                                                       });
 
