@@ -1212,12 +1212,12 @@ void ORBextractor::operator()( InputArray _image, InputArray _mask, vector<KeyPo
     if(mVisualizationActive)
     {
         // convert to color for drawing
-        if(image.channels()<3)
-            cvtColor(image,image,CV_GRAY2BGR);
-        DrawDebugImage(image, _keypoints);
-        cv::namedWindow("ORBExtractor", cv::WINDOW_NORMAL);
-        cv::imshow("ORBExtractor", image);
-        cv::waitKey(1);
+        // if(image.channels()<3)
+        //     cvtColor(image,image,CV_GRAY2BGR);
+        // DrawDebugImage(image, _keypoints);
+        // cv::namedWindow("ORBExtractor", cv::WINDOW_NORMAL);
+        // cv::imshow("ORBExtractor", image);
+        // cv::waitKey(1);
     }
 }
 

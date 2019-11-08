@@ -1,7 +1,7 @@
 import argparse
 import logging
 import matplotlib
-matplotlib.use("Agg")
+matplotlib.use('Agg')
 #  matplotlib.rcParams.update({'font.size': 5})
 import matplotlib.pyplot as plt
 import matplotlib.lines as lines
@@ -161,17 +161,20 @@ class OrbSlamSession(object):
                 x = range(start, end)
                 logger.debug("Filling between {} and {}".format(x[0], x[-1]))
                 if last_seperator_event_type in ('Init', 'Reloc'):
-                    # tracking
-                    color = 'green'
+                    # tracking         dark
+                    color = '#005300'
+                    hatch=' '
                 elif last_seperator_event_type == 'Lost':
-                    # relocalizing
-                    color = 'red'
+                    # relocalizing      mild
+                    color = '#FF4d4d'
+                    hatch=' '
                 elif last_seperator_event_type in ('Start', 'Reset'):
-                    # initializing
-                    color = 'yellow'
+                    # initializing   lightest
+                    color = '#FFFF77'
+                    hatch=' '
                 logger.debug("With color {}".format(color))
 
-                ax.fill_between(x, 0, 1, color=color)
+                ax.fill_between(x, 0, 1, color=color,alpha=0.5,hatch=hatch,linewidth=0)
                 #  line = lines.Line2D([end-5, end-5], [0, 1], linewidth=0.05, color = 'black')
                 #  ax.add_line(line)
 
@@ -186,7 +189,7 @@ class OrbSlamSession(object):
             # draw an L and a blue line for a Loop
             elif event.event_type == 'Loop':
                 ax.text(event.frame_number, 1.2, "L", size='xx-small', horizontalalignment='center')
-                line = lines.Line2D([event.frame_number, event.frame_number], [0, 1], linewidth=0.2,
+                line = lines.Line2D([event.frame_number, event.frame_number], [0, 1], linewidth=0.4,
                                     color = 'blue')
                 ax.add_line(line)
 
@@ -257,7 +260,7 @@ def main():
     session = OrbSlamSession(input_path)
     logger.info("Amount frames tracked: {} that's {}%".format(session.get_frames_tracked()
                                                              ,session.get_ratio_tracked()*100))
-    session.plot_timeline("status_line.pdf")
+    session.plot_timeline("status_line_new.pdf")
 
 if __name__ == '__main__':
     main()

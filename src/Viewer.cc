@@ -51,6 +51,11 @@ Viewer::Viewer(System* pSystem, FrameDrawer *pFrameDrawer, MapDrawer *pMapDrawer
     mViewpointY = fSettings["Viewer.ViewpointY"];
     mViewpointZ = fSettings["Viewer.ViewpointZ"];
     mViewpointF = fSettings["Viewer.ViewpointF"];
+    //video
+    output_cap.open("Viewer.mp4", 
+                cv::VideoWriter::fourcc('D','I','V','X'),
+                fps,
+                cv::Size(mImageWidth+300,mImageHeight+300));
 }
 
 void Viewer::Run()
@@ -220,7 +225,6 @@ void Viewer::Run()
     pangolin::RegisterKeyPressCallback('s', moveCameraBackward);
     pangolin::RegisterKeyPressCallback('a', moveCameraLeft);
     pangolin::RegisterKeyPressCallback('d', moveCameraRight);
-
     cv::namedWindow("ORB-SLAM2: Current Frame", CV_WINDOW_NORMAL);
     while(1)
     {
@@ -266,6 +270,9 @@ void Viewer::Run()
 
         cv::Mat im = mpFrameDrawer->DrawFrame();
         cv::imshow("ORB-SLAM2: Current Frame",im);
+        //video
+        output_cap.write(im);
+        
         mIgnoreFPS ? cv::waitKey(1) : cv::waitKey(mT);
 
         if(menuReset)
@@ -303,6 +310,13 @@ void Viewer::RequestFinish()
 {
     unique_lock<mutex> lock(mMutexFinish);
     mbFinishRequested = true;
+}
+
+//video
+void Viewer::ReleaseVideo()
+{    
+    cout << "Release video" <<endl ;
+    output_cap.release();
 }
 
 bool Viewer::CheckFinish()

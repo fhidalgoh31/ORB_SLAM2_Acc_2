@@ -30,6 +30,8 @@
 #include <stdio.h>
 #include <mutex>
 
+#include <opencv2/core/core.hpp>
+#include <opencv2/videoio.hpp>
 namespace ORB_SLAM2
 {
 
@@ -59,6 +61,8 @@ public:
 
     void ignoreFPS(const bool& ignore);
 
+    void ReleaseVideo();
+
 private:
 
     bool Stop();
@@ -83,7 +87,7 @@ private:
     bool mbStopped;
     bool mbStopRequested;
     std::mutex mMutexStop;
-
+    cv::VideoWriter output_cap;
     bool mIgnoreFPS;
 };
 

@@ -98,7 +98,7 @@ img = cv2.imread(args.input_image)
 
 while(1):
     cv2.namedWindow('Exclude image regions')
-    cv2.cv.SetMouseCallback('Exclude image regions', on_mouse, 0)
+    cv2.setMouseCallback('Exclude image regions', on_mouse, 0)
 
     if changed_img is not None:
         cv2.imshow('Exclude image regions', changed_img)

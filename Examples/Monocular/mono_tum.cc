@@ -26,21 +26,31 @@
 #include <algorithm>
 #include <fstream>
 #include <chrono>
-
+#include <signal.h>
+#include <cstdlib>
 #include <opencv2/core/core.hpp>
 
 using namespace std;
-
+bool shutdown_flag=0;
 void LoadImages(const string &strFile, vector<string> &vstrImageFilenames,
                 vector<double> &vTimestamps);
+void kill_handler(int s);
 
 int main(int argc, char **argv)
 {
-    if(argc != 4)
+    int beg_Images, end_Images;
+    if(argc < 4)
     {
         cerr << endl << "Usage: ./mono_tum path_to_vocabulary path_to_settings path_to_sequence" << endl;
         return 1;
     }
+    if(argc>4)
+        beg_Images=atoi(argv[4]);
+    if(argc>5)
+        end_Images=atoi(argv[5]);
+
+
+
     DLOG(INFO) << "Logging is active.";
 
     // Retrieve paths to images
@@ -64,13 +74,24 @@ int main(int argc, char **argv)
     cout << "Start processing sequence ..." << endl;
     cout << "Images in the sequence: " << nImages << endl << endl;
 
+    //handler kill signal
+    struct sigaction sigIntHandler;
+    sigIntHandler.sa_handler = kill_handler;
+    sigemptyset(&sigIntHandler.sa_mask);
+    sigIntHandler.sa_flags = 0;
+    sigaction(SIGINT, &sigIntHandler, NULL);
+
+
     // Main loop
     pangolin::Var<bool> pause("menu.Pause", false,  true);
     pangolin::Var<bool> nextFrame("menu.Next frame", false, false);
     pangolin::Var<std::string> fastForward("menu.Fast forward", "0");
     int forwardCounter = 0;
     cv::Mat im;
-    for(int ni=0; ni<nImages; ni++)
+    int ni=0;
+    if (beg_Images>1)
+        ni=beg_Images;
+    for(ni; ni<nImages; ni++)
     {
         ORB_SLAM2::SystemLogger::currentFrameNum = ni + 1;
 
@@ -130,7 +151,7 @@ int main(int argc, char **argv)
         if(forwardCounter != 0)
         {
             // Go as fast as you can
-            forwardCounter--;
+            forwardCounter--;   //ZZZ
             if(forwardCounter == 0)
             {
                 LOG(INFO) << "Fast forwarding done.";
@@ -149,8 +170,18 @@ int main(int argc, char **argv)
             if(ttrack<T)
                 usleep((T-ttrack)*1e6);
         }
-    }
 
+        if(shutdown_flag)
+             {cout << "shutdown" << endl;
+            //   SLAM.ReleaseVideo();      
+              }
+        
+        if (ni>end_Images)
+            {
+                pause = true;
+                SLAM.SaveKeyFrameTrajectoryTUM("KeyFrameTrajectory.txt");
+            }
+    }
     // Stop all threads
     SLAM.Shutdown();
 
@@ -164,7 +195,8 @@ int main(int argc, char **argv)
     cout << "-------" << endl << endl;
     cout << "median tracking time: " << vTimesTrack[nImages/2] << endl;
     cout << "mean tracking time: " << totaltime/nImages << endl;
-
+    std::cout << "Press Enter to continue" << std::endl;
+    if((char)cv::waitKey(1) == 13) std::cout << "Enter pressed" << std::endl;  // Pause ZZZ
     // Save camera trajectory
     SLAM.SaveKeyFrameTrajectoryTUM("KeyFrameTrajectory.txt");
 
@@ -196,6 +228,14 @@ void LoadImages(const string &strFile, vector<string> &vstrImageFilenames, vecto
             vTimestamps.push_back(t);
             ss >> sRGB;
             vstrImageFilenames.push_back(sRGB);
+            std::cout<<ss.str();            //zzz
         }
     }
+}
+
+void kill_handler(int s){
+    shutdown_flag=1;
+    printf("Caught signal %d\n",s);
+    exit(1); 
+
 }

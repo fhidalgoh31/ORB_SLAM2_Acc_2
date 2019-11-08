@@ -687,6 +687,7 @@ void Tracking::MonocularInitialization()
             DLOG_IF(INFO, visualizeInitialization) << "Init failed, only " << nmatches
                                                    << " matches found between current and reference"
                                                    << " frame. Need at least 100.";
+                                                   
             delete mpInitializer;
             mpInitializer = static_cast<Initializer*>(NULL);
             return;
